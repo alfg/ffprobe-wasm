@@ -22,7 +22,10 @@
           <div class="mt-3">Selected file: {{ file ? `${file.name}: ${file.size} bytes` : '' }}</div>
           <hr />
           {{ info }}
+
+          avformat_version: {{ avformat_version }}
         </div>
+
     </div>
 </template>
 
@@ -40,14 +43,17 @@ export default {
     }
   },
   computed: {
+    avformat_version() {
+      // return window.Module.ccall('c_avformat_version', 'string');
+      return window.Module.c_avformat_version();
+    },
     info() {
-
       const data = this.data;
       console.log('writing data to memfs');
       window.Module.FS.writeFile('testingfs', new Uint8Array(data));
       console.log('writing data to memfs done');
 
-      window.Module.ccall('version');
+      // window.Module.ccall('version');
       // Window.Module.ccall('openfile');
       return 'info';
     }
