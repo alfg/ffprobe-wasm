@@ -20,19 +20,25 @@
 
         <div v-if="data">
           <div class="mt-3">Selected file: {{ file ? `${file.name}: ${file.size} bytes` : '' }}</div>
-          <hr />
-          {{ info }}
 
-          avformat_version: {{ avformat_version }}
+          <b-tabs class="mt-4">
+            <b-tab title="Overview" class="mt-2">
+              <div v-if="data">
+                <Overview :info="info" />
+              </div>
+            </b-tab>
+          </b-tabs>
         </div>
-
     </div>
 </template>
 
 <script>
+import Overview from './Overview.vue';
+
 export default {
   name: 'File',
   components: {
+    Overview,
   },
   data() {
     return {
@@ -44,18 +50,10 @@ export default {
   },
   computed: {
     avformat_version() {
-      // return window.Module.ccall('c_avformat_version', 'string');
       return window.Module.c_avformat_version();
     },
     info() {
-      const data = this.data;
-      console.log('writing data to memfs');
-      window.Module.FS.writeFile('testingfs', new Uint8Array(data));
-      console.log('writing data to memfs done');
-
-      // window.Module.ccall('version');
-      // Window.Module.ccall('openfile');
-      return 'info';
+      return this.data && window.Module.get_file_info();
     }
   },
   methods: {
@@ -71,6 +69,7 @@ export default {
       reader.onload = (event) => {
         this.progress = 100;
         this.data = new Uint8Array(event.target.result);
+        window.Module.FS.writeFile('file', new Uint8Array(this.data));
         setTimeout(() => { this.showProgress = false; }, 2000);
       }
       reader.onprogress = (event) => {

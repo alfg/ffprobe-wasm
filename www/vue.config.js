@@ -8,4 +8,12 @@ module.exports = {
   publicPath: process.env.NODE_ENV === 'production'
     ? '/ffmpeg-webtools/'
     : '/',
+  configureWebpack: {
+    devServer: {
+      headers: {
+        'Cross-Origin-Opener-Policy': 'same-origin',
+        'Cross-Origin-Embedder-Policy': 'require-corp',
+      }
+    }
+  }, 
 };
