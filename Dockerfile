@@ -1,7 +1,7 @@
 FROM emscripten/emsdk as build
 
 ARG FFMPEG_VERSION=4.3.1
-ARG X264_VERSION=master
+ARG X264_VERSION=20170226-2245-stable
 
 ARG PREFIX=/opt/ffmpeg
 ARG MAKEFLAGS="-j4"
@@ -9,11 +9,11 @@ ARG MAKEFLAGS="-j4"
 RUN apt-get update && apt-get install -y autoconf libtool build-essential
 
 # libx264
-RUN cd /tmp/ && \
-  wget https://code.videolan.org/videolan/x264/-/archive/master/x264-master.tar.gz && \
-  tar zxf x264-${X264_VERSION}.tar.gz
+RUN cd /tmp && \
+  wget https://download.videolan.org/pub/videolan/x264/snapshots/x264-snapshot-${X264_VERSION}.tar.bz2 && \
+  tar xvfj x264-snapshot-${X264_VERSION}.tar.bz2
 
-RUN cd /tmp/x264-${X264_VERSION} && \
+RUN cd /tmp/x264-snapshot-${X264_VERSION} && \
   emconfigure ./configure \
   --prefix=${PREFIX} \
   --host=i686-gnu \
@@ -22,8 +22,8 @@ RUN cd /tmp/x264-${X264_VERSION} && \
   --disable-asm \
   --extra-cflags="-s USE_PTHREADS=1"
 
-RUN cd /tmp/x264-${X264_VERSION} && \
-  emmake make install-lib-static -j4
+RUN cd /tmp/x264-snapshot-${X264_VERSION} && \
+  emmake make && emmake make install 
 
 # Get ffmpeg source.
 RUN cd /tmp/ && \
@@ -72,6 +72,6 @@ RUN cd /tmp/ffmpeg-${FFMPEG_VERSION} && \
 # 	-o ffmpeg-webtools.js
 
 WORKDIR /build
-COPY ./src/main.c /build/src/main.c
+# COPY ./src/main.c /build/src/main.c
 COPY ./Makefile /build/Makefile
 # RUN make
