@@ -40,11 +40,25 @@ RUN cd /tmp/ffmpeg-${FFMPEG_VERSION} && \
   --target-os=none \
   --arch=x86_32 \
   --enable-cross-compile \
+  --disable-debug \
   --disable-x86asm \
   --disable-inline-asm \
   --disable-stripping \
   --disable-programs \
   --disable-doc \
+  --disable-all \
+  --enable-avcodec \
+  --enable-avformat \
+  --enable-avfilter \
+  --enable-avdevice \
+  --enable-avutil \
+  --enable-swresample \
+  --enable-postproc \
+  --enable-swscale \
+  --enable-protocol=file \
+  --enable-decoder=h264,aac,pcm_s16le \
+  --enable-demuxer=mov \
+  --enable-muxer=mp4 \
   --enable-gpl \
   --enable-libx264 \
   --extra-cflags="$CFLAGS" \

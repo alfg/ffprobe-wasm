@@ -1,6 +1,7 @@
 dist/ffmpeg-webtools.js:
 	mkdir -p dist && \
 	emcc --bind \
+	-O3 \
 	-L/opt/ffmpeg/lib \
 	-I/opt/ffmpeg/include/ \
  	-s EXTRA_EXPORTED_RUNTIME_METHODS="[FS, cwrap, ccall, getValue, setValue, writeAsciiToMemory]" \
