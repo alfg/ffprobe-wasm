@@ -29,6 +29,9 @@ typedef struct Stream {
   int level;
   int width;
   int height;
+  int channels;
+  int sample_rate;
+  int frame_size;
 } Stream;
 
 typedef struct FileInfoResponse {
@@ -105,6 +108,9 @@ FileInfoResponse get_file_info() {
         .level = (int)pLocalCodecParameters->level,
         .width = (int)pLocalCodecParameters->width,
         .height = (int)pLocalCodecParameters->height,
+        .channels = (int)pLocalCodecParameters->channels,
+        .sample_rate = (int)pLocalCodecParameters->sample_rate,
+        .frame_size = (int)pLocalCodecParameters->frame_size,
       };
       r.streams.push_back(stream);
       free(fourcc);
@@ -130,6 +136,9 @@ EMSCRIPTEN_BINDINGS(FileInfoResponse_struct) {
   .field("level", &Stream::level)
   .field("width", &Stream::width)
   .field("height", &Stream::height)
+  .field("channels", &Stream::channels)
+  .field("sample_rate", &Stream::sample_rate)
+  .field("frame_size", &Stream::frame_size)
   ;
   register_vector<Stream>("Stream");
   emscripten::value_object<FileInfoResponse>("FileInfoResponse")
