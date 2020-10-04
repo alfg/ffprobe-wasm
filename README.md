@@ -3,7 +3,10 @@
 
 https://alfg.github.io/ffprobe-web-analyzer/
 
-⚠️ Currently functional, but a work-in-progress! Check back for updates!
+⚠️ A work-in-progress! Check back for updates!
+
+⚠️⚠️ Currently works in Google Chrome and Microsoft Edge only due to limited support for [SharedArrayBuffer](https://caniuse.com/sharedarraybuffer). Github Pages does not support custom response headers to enable the [required CORS headers](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/SharedArrayBuffer) for Firefox.
+
 
 ## Development
 `ffprobe-web-analyzer` uses [emscripten](https://emscripten.org/) to compile [FFmpeg](https://ffmpeg.org)'s [libav](https://ffmpeg.org/doxygen/4.1/index.html) to [Web Assembly](https://webassembly.org/) via [Docker](https://www.docker.com/).
