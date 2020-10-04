@@ -83,7 +83,7 @@ RUN cd /tmp/ffmpeg-${FFMPEG_VERSION} && \
 # 	-s EXTRA_EXPORTED_RUNTIME_METHODS="[FS, cwrap, ccall, setValue, writeAsciiToMemory]" \
 # 	-s INITIAL_MEMORY=268435456 \
 # 	-lavcodec -lavformat -lavfilter -lavdevice -lswresample -lswscale -lavutil -lm -lx264 -pthread \
-# 	-o ffmpeg-webtools.js
+# 	-o ffprobe-web-analyzer.js
 
 WORKDIR /build
 # COPY ./src/main.c /build/src/main.c

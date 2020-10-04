@@ -1,7 +1,7 @@
 version: '3'
 
 services:
-  ffmpeg-webtools:
+  ffprobe-web-analyzer:
     build: .
     volumes:
       - "./:/build"

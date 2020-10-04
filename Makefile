@@ -1,4 +1,4 @@
-dist/ffmpeg-webtools.js:
+dist/ffprobe-web-analyzer.js:
 	mkdir -p dist && \
 	emcc --bind \
 	-O3 \
@@ -8,5 +8,5 @@ dist/ffmpeg-webtools.js:
  	-s INITIAL_MEMORY=268435456 \
 	-pthread \
  	-lavcodec -lavformat -lavfilter -lavdevice -lswresample -lswscale -lavutil -lm -lx264 -pthread \
-	-o www/public/ffmpeg-webtools.js \
+	-o www/public/ffprobe-web-analyzer.js \
 	src/main.cpp

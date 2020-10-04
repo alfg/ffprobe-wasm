@@ -1,7 +1,7 @@
 <template>
   <!-- http://tholman.com/github-corners/  -->
   <a
-    href="https://github.com/alfg/ffmpeg-webtools"
+    href="https://github.com/alfg/ffprobe-web-analyzer"
     class="github-corner"
     aria-label="View source on GitHub"
   >

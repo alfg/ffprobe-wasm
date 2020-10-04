@@ -27,6 +27,8 @@
                 <Overview :info="info" />
               </div>
             </b-tab>
+            <b-tab title="Streams" class="mt-2" disabled></b-tab>
+            <b-tab title="Frames" class="mt-2" disabled></b-tab>
           </b-tabs>
         </div>
     </div>

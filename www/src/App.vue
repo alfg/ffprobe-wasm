@@ -4,7 +4,7 @@
       <div class="container">
         <b-navbar-nav>
           <b-nav-item href="#">
-            FFmpeg WebTools
+            FFProbe Web Analyzer
           </b-nav-item>
         </b-navbar-nav>
       </div>
@@ -13,7 +13,7 @@
     <GitHubCorner />
 
     <div id="app" class="container">
-      <h3>FFmpeg WebTools</h3>
+      <h3>FFProbe Web Analyzer</h3>
       <hr />
       <File />
     </div>
@@ -23,8 +23,8 @@
       <div class="text-muted">
         <ul>
           <li>{{ name }}-{{ version }}</li>
-          <li><a href="https://github.com/alfg/ffmpeg-webtools">Source</a></li>
-          <li><a href="https://github.com/alfg/ffmpeg-webtools/issues">Report Bugs</a></li>
+          <li><a href="https://github.com/alfg/ffprobe-web-analyzer">Source</a></li>
+          <li><a href="https://github.com/alfg/ffprobe-web-analyzer/issues">Report Bugs</a></li>
         </ul>
       </div>
     </footer>

@@ -1,9 +1,9 @@
 <template>
   <div>
-    <h4>AVContext Info</h4>
+    <h4>Metadata</h4>
     <b-table stacked :items="items"></b-table>
 
-    <h4>AVContext Streams</h4>
+    <h4>Streams</h4>
     <b-table striped hover :items="streams"></b-table>
   </div>
 </template>
