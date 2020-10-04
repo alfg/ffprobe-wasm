@@ -8,5 +8,5 @@ dist/ffprobe-web-analyzer.js:
  	-s INITIAL_MEMORY=268435456 \
 	-pthread \
  	-lavcodec -lavformat -lavfilter -lavdevice -lswresample -lswscale -lavutil -lm -lx264 -pthread \
-	-o www/public/ffprobe-web-analyzer.js \
-	src/main.cpp
+	-o dist/ffprobe-web-analyzer.js \
+	src/ffprobe-web-analyzer-wrapper.cpp

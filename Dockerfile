@@ -77,15 +77,10 @@ RUN cd /tmp/ffmpeg-${FFMPEG_VERSION} && \
   emmake make -j4 && \
   emmake make install
 
-# RUN	cd /build && \
-#   emcc -L/opt/ffmpeg/lib -I/opt/ffmpeg/include/ src/main.c \
-# 	-s EXPORTED_FUNCTIONS='["_version", "_openfile"]' \
-# 	-s EXTRA_EXPORTED_RUNTIME_METHODS="[FS, cwrap, ccall, setValue, writeAsciiToMemory]" \
-# 	-s INITIAL_MEMORY=268435456 \
-# 	-lavcodec -lavformat -lavfilter -lavdevice -lswresample -lswscale -lavutil -lm -lx264 -pthread \
-# 	-o ffprobe-web-analyzer.js
+
+COPY ./src/ffprobe-web-analyzer-wrapper.cpp /build/src/ffprobe-web-analyzer-wrapper.cpp
+COPY ./Makefile /build/Makefile
 
 WORKDIR /build
-# COPY ./src/main.c /build/src/main.c
-COPY ./Makefile /build/Makefile
-# RUN make
+
+RUN make
