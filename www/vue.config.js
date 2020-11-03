@@ -2,7 +2,7 @@ module.exports = {
   pages: {
     index: {
       entry: 'src/main.js',
-      title: 'FFMpeg WebTools',
+      title: 'FFProbe Web Analyzer',
     }
   },
   publicPath: process.env.NODE_ENV === 'production'

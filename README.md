@@ -23,9 +23,14 @@ Emscripten is also used to create and compile the Wasm bindings to be imported b
 docker-compose run ffprobe-web-analyzer make
 ```
 
-This will build the WASM module and place it into the `/dist` folder.
+This will build the Wasm module and place it into the `/dist` directory.
 
-* Install and run web:
+* Copy the JS and Wasm modules into `www/public/`:
+```
+cp -a dist/. www/public/
+```
+
+* Install and run the web application:
 ```
 cd www
 npm install

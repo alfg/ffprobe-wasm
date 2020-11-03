@@ -14,6 +14,11 @@
 
     <div id="app" class="container">
       <h3>FFProbe Web Analyzer</h3>
+
+      <b-alert variant="warning" show>
+        ⚠️Compatible with Chrome and Edge only due to limited support for <a href="https://caniuse.com/sharedarraybuffer">SharedArrayBuffer</a> and the <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/SharedArrayBuffer">required CORS headers</a> for Firefox on Github Pages.
+      </b-alert>
+
       <hr />
       <File />
     </div>
