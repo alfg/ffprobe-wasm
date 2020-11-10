@@ -1,4 +1,4 @@
-dist/ffprobe-web-analyzer.js:
+dist/ffprobe-wasm.js:
 	mkdir -p dist && \
 	emcc --bind \
 	-O3 \
@@ -8,5 +8,5 @@ dist/ffprobe-web-analyzer.js:
  	-s INITIAL_MEMORY=268435456 \
 	-pthread \
  	-lavcodec -lavformat -lavfilter -lavdevice -lswresample -lswscale -lavutil -lm -lx264 -pthread \
-	-o dist/ffprobe-web-analyzer.js \
-	src/ffprobe-web-analyzer-wrapper.cpp
+	-o dist/ffprobe-wasm.js \
+	src/ffprobe-wasm-wrapper.cpp

@@ -4,7 +4,7 @@
       <div class="container">
         <b-navbar-nav>
           <b-nav-item href="#">
-            FFProbe Web Analyzer
+            FFProbe
           </b-nav-item>
         </b-navbar-nav>
       </div>
@@ -13,7 +13,7 @@
     <GitHubCorner />
 
     <div id="app" class="container">
-      <h3>FFProbe Web Analyzer</h3>
+      <h3>FFProbe</h3>
 
       <b-alert variant="warning" show>
         ⚠️Compatible with Chrome and Edge only due to limited support for <a href="https://caniuse.com/sharedarraybuffer">SharedArrayBuffer</a> and the <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/SharedArrayBuffer">required CORS headers</a> for Firefox on Github Pages.
@@ -28,8 +28,8 @@
       <div class="text-muted">
         <ul>
           <li>{{ name }}-{{ version }}</li>
-          <li><a href="https://github.com/alfg/ffprobe-web-analyzer">Source</a></li>
-          <li><a href="https://github.com/alfg/ffprobe-web-analyzer/issues">Report Bugs</a></li>
+          <li><a href="https://github.com/alfg/ffprobe-wasm">Source</a></li>
+          <li><a href="https://github.com/alfg/ffprobe-wasm/issues">Report Bugs</a></li>
         </ul>
       </div>
     </footer>

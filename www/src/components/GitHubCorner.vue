@@ -1,7 +1,7 @@
 <template>
   <!-- http://tholman.com/github-corners/  -->
   <a
-    href="https://github.com/alfg/ffprobe-web-analyzer"
+    href="https://github.com/alfg/ffprobe-wasm"
     class="github-corner"
     aria-label="View source on GitHub"
   >

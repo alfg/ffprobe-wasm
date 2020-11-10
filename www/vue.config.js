@@ -2,11 +2,11 @@ module.exports = {
   pages: {
     index: {
       entry: 'src/main.js',
-      title: 'FFProbe Web Analyzer',
+      title: 'FFProbe',
     }
   },
   publicPath: process.env.NODE_ENV === 'production'
-    ? '/ffprobe-web-analyzer/'
+    ? '/ffprobe-wasm/'
     : '/',
   configureWebpack: {
     devServer: {

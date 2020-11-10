@@ -78,7 +78,7 @@ RUN cd /tmp/ffmpeg-${FFMPEG_VERSION} && \
   emmake make install
 
 
-COPY ./src/ffprobe-web-analyzer-wrapper.cpp /build/src/ffprobe-web-analyzer-wrapper.cpp
+COPY ./src/ffprobe-wasm-wrapper.cpp /build/src/ffprobe-wasm-wrapper.cpp
 COPY ./Makefile /build/Makefile
 
 WORKDIR /build

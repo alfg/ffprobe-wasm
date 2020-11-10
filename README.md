@@ -1,7 +1,7 @@
-# `FFProbe Web Analyzer`
+# `FFProbe Wasm`
 > A Web-based FFProbe. Powered by FFmpeg, Vue and Web Assembly! 🦀.
 
-https://alfg.github.io/ffprobe-web-analyzer/
+https://alfg.github.io/ffprobe-wasm/
 
 ⚠️ A work-in-progress! Check back for updates!
 
@@ -9,7 +9,7 @@ https://alfg.github.io/ffprobe-web-analyzer/
 
 
 ## Development
-`ffprobe-web-analyzer` uses [emscripten](https://emscripten.org/) to compile [FFmpeg](https://ffmpeg.org)'s [libav](https://ffmpeg.org/doxygen/4.1/index.html) to [Web Assembly](https://webassembly.org/) via [Docker](https://www.docker.com/).
+`ffprobe-wasm` uses [emscripten](https://emscripten.org/) to compile [FFmpeg](https://ffmpeg.org)'s [libav](https://ffmpeg.org/doxygen/4.1/index.html) to [Web Assembly](https://webassembly.org/) via [Docker](https://www.docker.com/).
 
 Emscripten is also used to create and compile the Wasm bindings to be imported by the browser.
 
@@ -20,7 +20,7 @@ Emscripten is also used to create and compile the Wasm bindings to be imported b
 ### Setup 
 * Clone project and build the Wasm module via Docker:
 ```
-docker-compose run ffprobe-web-analyzer make
+docker-compose run ffprobe-wasm make
 ```
 
 This will build the Wasm module and place it into the `/dist` directory.
