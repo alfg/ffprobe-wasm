@@ -96,21 +96,6 @@ FileInfoResponse get_file_info() {
       }
       fourcc[4] = 0x00; // NULL terminator.
 
-      AVCodec *pLocalCodec = avcodec_find_decoder(pLocalCodecParameters->codec_id);
-      if (pLocalCodecParameters->codec_type == AVMEDIA_TYPE_VIDEO) {
-        if (video_stream_index == -1) {
-          video_stream_index = i;
-          pCodec = pLocalCodec;
-          pCodecParameters = pLocalCodecParameters;
-        }
-
-        printf("Video Codec: resolution %d x %d",
-          pLocalCodecParameters->width, pLocalCodecParameters->height);
-      } else if (pLocalCodecParameters->codec_type == AVMEDIA_TYPE_AUDIO) {
-        printf("Audio Codec: %d channels, sample rate %d",
-          pLocalCodecParameters->channels, pLocalCodecParameters->sample_rate);
-      }
-
       Stream stream = {
         .id = (int)pFormatContext->streams[i]->id,
         .start_time = (int)pFormatContext->streams[i]->start_time,
