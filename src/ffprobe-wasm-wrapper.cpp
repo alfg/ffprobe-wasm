@@ -128,7 +128,7 @@ FileInfoResponse get_file_info() {
     return r;
 }
 
-FramesResponse get_frames() {
+FramesResponse get_frames(int offset) {
     av_log_set_level(AV_LOG_QUIET); // No logging output for libav.
 
     FILE *file = fopen("file", "rb");
@@ -190,22 +190,39 @@ FramesResponse get_frames() {
     AVPacket *pPacket = av_packet_alloc();
     AVFrame *pFrame = av_frame_alloc();
 
-    int how_many_packets_to_process = 100;
-    // av_seek_frame(pFormatContext, 1, 1001*30, AVSEEK_FLAG_ANY);
-    while (av_read_frame(pFormatContext, pPacket) >= 0) {
-      if (pPacket->stream_index == video_stream_index) {
+    int how_many_packets_to_process = 300;
+    int frame_count = 0;
 
-        avcodec_send_packet(pCodecContext, pPacket);
-        avcodec_receive_frame(pCodecContext, pFrame);
-        Frame f = {
-          .pict_type = (char) av_get_picture_type_char(pFrame->pict_type),
-          .frame_number = pCodecContext->frame_number,
-          .pkt_size = pFrame->pkt_size,
-        };
-        r.frames.push_back(f);
+    // Read video frames.
+    // TODO: Support seek so we don't have to cap at 300 frames.
+    while (av_read_frame(pFormatContext, pPacket) >= 0) {
+      if (frame_count >= offset) {
+        if (pPacket->stream_index == video_stream_index) {
+
+          int response = 0;
+          response = avcodec_send_packet(pCodecContext, pPacket);
+
+          if (response >= 0) {
+            response = avcodec_receive_frame(pCodecContext, pFrame);
+            if (response == AVERROR(EAGAIN) || response == AVERROR_EOF) {
+              continue;
+            }
+
+            Frame f = {
+              .pict_type = (char) av_get_picture_type_char(pFrame->pict_type),
+              .frame_number = pCodecContext->frame_number,
+              .pkt_size = pFrame->pkt_size,
+            };
+            r.frames.push_back(f);
+
+            if (--how_many_packets_to_process <= 0) break;
+          }
+        }
       }
-      if (--how_many_packets_to_process <= 0) break;
+
+      frame_count++;
     }
+
     return r;
 }
 
@@ -234,9 +251,9 @@ EMSCRIPTEN_BINDINGS(FileInfoResponse_struct) {
   register_vector<Stream>("Stream");
 
   emscripten::value_object<Frame>("Frame")
-  .field("frame_type", &Frame::pict_type)
+  .field("pict_type", &Frame::pict_type)
   .field("frame_number", &Frame::frame_number)
-  .field("frame_size", &Frame::pkt_size);
+  .field("pkt_size", &Frame::pkt_size);
   register_vector<Frame>("Frame");
 
   emscripten::value_object<FileInfoResponse>("FileInfoResponse")
