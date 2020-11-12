@@ -28,7 +28,9 @@
               </div>
             </b-tab>
             <b-tab title="Streams" class="mt-2" disabled></b-tab>
-            <b-tab title="Frames" class="mt-2" disabled></b-tab>
+            <b-tab title="Frames" class="mt-2" lazy>
+              <Frames />
+            </b-tab>
           </b-tabs>
         </div>
     </div>
@@ -36,11 +38,13 @@
 
 <script>
 import Overview from './Overview.vue';
+import Frames from './Frames.vue';
 
 export default {
   name: 'File',
   components: {
     Overview,
+    Frames,
   },
   data() {
     return {
@@ -84,10 +88,3 @@ export default {
   }
 }
 </script>
-
-<style scoped>
-.tree-view {
-  overflow: auto;
-  height: 60vh;
-}
-</style>

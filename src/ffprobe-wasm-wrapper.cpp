@@ -34,6 +34,12 @@ typedef struct Stream {
   int frame_size;
 } Stream;
 
+typedef struct Frame {
+  char pict_type;
+  int frame_number;
+  int pkt_size;
+} Frame;
+
 typedef struct FileInfoResponse {
   std::string name;
   int bit_rate;
@@ -43,6 +49,10 @@ typedef struct FileInfoResponse {
   int flags;
   std::vector<Stream> streams;
 } FileInfoResponse;
+
+typedef struct FramesResponse {
+  std::vector<Frame> frames;
+} FramesResponse;
 
 FileInfoResponse get_file_info() {
     FILE *file = fopen("file", "rb");
@@ -79,11 +89,11 @@ FileInfoResponse get_file_info() {
     };
 
     // Get streams data.
-    AVCodec  *pCodec = NULL;
-    AVCodecParameters *pCodecParameters = NULL;
-    int video_stream_index = -1;
+    // AVCodec  *pCodec = NULL;
+    // AVCodecParameters *pCodecParameters = NULL;
+    // int video_stream_index = -1;
 
-    // Loop through the streams and print its information.
+    // Loop through the streams.
     for (int i = 0; i < pFormatContext->nb_streams; i++) {
       AVCodecParameters *pLocalCodecParameters = NULL;
       pLocalCodecParameters = pFormatContext->streams[i]->codecpar;
@@ -118,6 +128,104 @@ FileInfoResponse get_file_info() {
     return r;
 }
 
+FramesResponse get_frames(int offset) {
+    av_log_set_level(AV_LOG_QUIET); // No logging output for libav.
+
+    FILE *file = fopen("file", "rb");
+    if (!file) {
+      printf("cannot open file\n");
+    }
+    fclose(file);
+
+    AVFormatContext *pFormatContext = avformat_alloc_context();
+    if (!pFormatContext) {
+      printf("ERROR: could not allocate memory for Format Context\n");
+    }
+
+    // Open the file and read header.
+    int ret;
+    if ((ret = avformat_open_input(&pFormatContext, "file", NULL, NULL)) < 0) {
+        printf("ERROR: could not open the file. Error: %d\n", ret);
+        printf("%s", av_err2str(ret));
+    }
+
+    // Get stream info from format.
+    if (avformat_find_stream_info(pFormatContext, NULL) < 0) {
+      printf("ERROR: could not get stream info\n");
+    }
+
+    // Get streams data.
+    AVCodec  *pCodec = NULL;
+    AVCodecParameters *pCodecParameters = NULL;
+    int video_stream_index = -1;
+
+    // Loop through the streams.
+    for (int i = 0; i < pFormatContext->nb_streams; i++) {
+      AVCodecParameters *pLocalCodecParameters = NULL;
+      pLocalCodecParameters = pFormatContext->streams[i]->codecpar;
+
+      // Print out the decoded frame info.
+      AVCodec *pLocalCodec = avcodec_find_decoder(pLocalCodecParameters->codec_id);
+      if (pLocalCodecParameters->codec_type == AVMEDIA_TYPE_VIDEO) {
+        if (video_stream_index == -1) {
+          video_stream_index = i;
+          pCodec = pLocalCodec;
+          pCodecParameters = pLocalCodecParameters;
+        }
+
+        printf("Video Codec: resolution %d x %d\n",
+          pLocalCodecParameters->width, pLocalCodecParameters->height);
+      } else if (pLocalCodecParameters->codec_type == AVMEDIA_TYPE_AUDIO) {
+        printf("Audio Codec: %d channels, sample rate %d\n",
+          pLocalCodecParameters->channels, pLocalCodecParameters->sample_rate);
+      }
+    }
+
+    FramesResponse r;
+
+    AVCodecContext *pCodecContext = avcodec_alloc_context3(pCodec);
+    avcodec_parameters_to_context(pCodecContext, pCodecParameters);
+    avcodec_open2(pCodecContext, pCodec, NULL);
+
+    AVPacket *pPacket = av_packet_alloc();
+    AVFrame *pFrame = av_frame_alloc();
+
+    int how_many_packets_to_process = 300;
+    int frame_count = 0;
+
+    // Read video frames.
+    // TODO: Support seek so we don't have to cap at 300 frames.
+    while (av_read_frame(pFormatContext, pPacket) >= 0) {
+      if (frame_count >= offset) {
+        if (pPacket->stream_index == video_stream_index) {
+
+          int response = 0;
+          response = avcodec_send_packet(pCodecContext, pPacket);
+
+          if (response >= 0) {
+            response = avcodec_receive_frame(pCodecContext, pFrame);
+            if (response == AVERROR(EAGAIN) || response == AVERROR_EOF) {
+              continue;
+            }
+
+            Frame f = {
+              .pict_type = (char) av_get_picture_type_char(pFrame->pict_type),
+              .frame_number = pCodecContext->frame_number,
+              .pkt_size = pFrame->pkt_size,
+            };
+            r.frames.push_back(f);
+
+            if (--how_many_packets_to_process <= 0) break;
+          }
+        }
+      }
+
+      frame_count++;
+    }
+
+    return r;
+}
+
 
 EMSCRIPTEN_BINDINGS(my_constant_example) {
     function("c_avformat_version", &c_avformat_version);
@@ -142,6 +250,12 @@ EMSCRIPTEN_BINDINGS(FileInfoResponse_struct) {
   ;
   register_vector<Stream>("Stream");
 
+  emscripten::value_object<Frame>("Frame")
+  .field("pict_type", &Frame::pict_type)
+  .field("frame_number", &Frame::frame_number)
+  .field("pkt_size", &Frame::pkt_size);
+  register_vector<Frame>("Frame");
+
   emscripten::value_object<FileInfoResponse>("FileInfoResponse")
   .field("name", &FileInfoResponse::name)
   .field("duration", &FileInfoResponse::duration)
@@ -152,4 +266,9 @@ EMSCRIPTEN_BINDINGS(FileInfoResponse_struct) {
   .field("streams", &FileInfoResponse::streams)
   ;
   function("get_file_info", &get_file_info);
+
+  emscripten::value_object<FramesResponse>("FramesResponse")
+  .field("frames", &FramesResponse::frames)
+  ;
+  function("get_frames", &get_frames);
 }
