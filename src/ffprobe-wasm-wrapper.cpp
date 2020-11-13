@@ -35,8 +35,10 @@ typedef struct Stream {
 } Stream;
 
 typedef struct Frame {
-  char pict_type;
   int frame_number;
+  char pict_type;
+  int pts;
+  int dts;
   int pkt_size;
 } Frame;
 
@@ -52,6 +54,7 @@ typedef struct FileInfoResponse {
 
 typedef struct FramesResponse {
   std::vector<Frame> frames;
+  int nb_frames;
 } FramesResponse;
 
 FileInfoResponse get_file_info() {
@@ -87,11 +90,6 @@ FileInfoResponse get_file_info() {
       .nb_streams = (int)pFormatContext->nb_streams,
       .flags = pFormatContext->flags
     };
-
-    // Get streams data.
-    // AVCodec  *pCodec = NULL;
-    // AVCodecParameters *pCodecParameters = NULL;
-    // int video_stream_index = -1;
 
     // Loop through the streams.
     for (int i = 0; i < pFormatContext->nb_streams; i++) {
@@ -158,6 +156,7 @@ FramesResponse get_frames(int offset) {
     AVCodec  *pCodec = NULL;
     AVCodecParameters *pCodecParameters = NULL;
     int video_stream_index = -1;
+    int nb_frames = 0;
 
     // Loop through the streams.
     for (int i = 0; i < pFormatContext->nb_streams; i++) {
@@ -169,6 +168,7 @@ FramesResponse get_frames(int offset) {
       if (pLocalCodecParameters->codec_type == AVMEDIA_TYPE_VIDEO) {
         if (video_stream_index == -1) {
           video_stream_index = i;
+          nb_frames = pFormatContext->streams[i]->nb_frames;
           pCodec = pLocalCodec;
           pCodecParameters = pLocalCodecParameters;
         }
@@ -182,6 +182,7 @@ FramesResponse get_frames(int offset) {
     }
 
     FramesResponse r;
+    r.nb_frames = nb_frames;
 
     AVCodecContext *pCodecContext = avcodec_alloc_context3(pCodec);
     avcodec_parameters_to_context(pCodecContext, pCodecParameters);
@@ -190,14 +191,13 @@ FramesResponse get_frames(int offset) {
     AVPacket *pPacket = av_packet_alloc();
     AVFrame *pFrame = av_frame_alloc();
 
-    int how_many_packets_to_process = 300;
-    int frame_count = 0;
+    int how_many_packets_to_process = 48; // per page.
+    int frame_count = 1;
 
     // Read video frames.
-    // TODO: Support seek so we don't have to cap at 300 frames.
     while (av_read_frame(pFormatContext, pPacket) >= 0) {
-      if (frame_count >= offset) {
-        if (pPacket->stream_index == video_stream_index) {
+      if (pPacket->stream_index == video_stream_index) {
+        if (frame_count >= offset) {
 
           int response = 0;
           response = avcodec_send_packet(pCodecContext, pPacket);
@@ -209,8 +209,10 @@ FramesResponse get_frames(int offset) {
             }
 
             Frame f = {
+              .frame_number = frame_count,
               .pict_type = (char) av_get_picture_type_char(pFrame->pict_type),
-              .frame_number = pCodecContext->frame_number,
+              .pts = (int) pPacket->pts,
+              .dts = (int) pPacket->dts,
               .pkt_size = pFrame->pkt_size,
             };
             r.frames.push_back(f);
@@ -218,11 +220,9 @@ FramesResponse get_frames(int offset) {
             if (--how_many_packets_to_process <= 0) break;
           }
         }
+        frame_count++;
       }
-
-      frame_count++;
     }
-
     return r;
 }
 
@@ -251,8 +251,10 @@ EMSCRIPTEN_BINDINGS(FileInfoResponse_struct) {
   register_vector<Stream>("Stream");
 
   emscripten::value_object<Frame>("Frame")
-  .field("pict_type", &Frame::pict_type)
   .field("frame_number", &Frame::frame_number)
+  .field("pict_type", &Frame::pict_type)
+  .field("pts", &Frame::pts)
+  .field("dts", &Frame::dts)
   .field("pkt_size", &Frame::pkt_size);
   register_vector<Frame>("Frame");
 
@@ -269,6 +271,7 @@ EMSCRIPTEN_BINDINGS(FileInfoResponse_struct) {
 
   emscripten::value_object<FramesResponse>("FramesResponse")
   .field("frames", &FramesResponse::frames)
+  .field("nb_frames", &FramesResponse::nb_frames)
   ;
   function("get_frames", &get_frames);
 }
