@@ -1,5 +1,8 @@
 <template>
   <div>
+    <h4>Version</h4>
+    <b-table stacked :items="versions"></b-table>
+
     <h4>Metadata</h4>
     <b-table stacked :items="items"></b-table>
 
@@ -32,6 +35,13 @@ export default {
           nb_streams: this.info.nb_streams,
           flags: this.info.flags,
         },
+      ],
+      versions: [
+        {
+          libavutil:  window.Module.avutil_version(),
+          libavcodec:  window.Module.avcodec_version(),
+          libavformat:  window.Module.avformat_version(),
+        }
       ]
     }
   }

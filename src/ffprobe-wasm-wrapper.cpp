@@ -17,6 +17,14 @@ const std::string c_avformat_version() {
     return AV_STRINGIFY(LIBAVFORMAT_VERSION);
 }
 
+const std::string c_avcodec_version() {
+    return AV_STRINGIFY(LIBAVCODEC_VERSION);
+}
+
+const std::string c_avutil_version() {
+    return AV_STRINGIFY(LIBAVUTIL_VERSION);
+}
+
 typedef struct Stream {
   int id;
   int start_time;
@@ -227,11 +235,13 @@ FramesResponse get_frames(int offset) {
 }
 
 
-EMSCRIPTEN_BINDINGS(my_constant_example) {
-    function("c_avformat_version", &c_avformat_version);
+EMSCRIPTEN_BINDINGS(constants) {
+    function("avformat_version", &c_avformat_version);
+    function("avcodec_version", &c_avcodec_version);
+    function("avutil_version", &c_avutil_version);
 }
 
-EMSCRIPTEN_BINDINGS(FileInfoResponse_struct) {
+EMSCRIPTEN_BINDINGS(structs) {
   emscripten::value_object<Stream>("Stream")
   .field("id", &Stream::id)
   .field("start_time", &Stream::start_time)

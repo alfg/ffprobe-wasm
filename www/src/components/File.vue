@@ -27,7 +27,6 @@
                 <Overview :info="info" />
               </div>
             </b-tab>
-            <b-tab title="Streams" class="mt-2" disabled></b-tab>
             <b-tab title="Frames" class="mt-2" lazy>
               <Frames />
             </b-tab>
@@ -55,9 +54,6 @@ export default {
     }
   },
   computed: {
-    avformat_version() {
-      return window.Module.c_avformat_version();
-    },
     info() {
       return this.data && window.Module.get_file_info();
     }
