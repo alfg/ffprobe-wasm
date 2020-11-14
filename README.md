@@ -1,5 +1,5 @@
 # `FFProbe Wasm`
-> A Web-based FFProbe. Powered by FFmpeg, Vue and Web Assembly! 🦀.
+> A Web-based FFProbe. Powered by FFmpeg, Vue and Web Assembly!
 
 https://alfg.github.io/ffprobe-wasm/
 
