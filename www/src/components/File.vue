@@ -3,7 +3,7 @@
         <b-form-group label="Select a file:" label-for="file">
           <b-form-file
               id="file"
-              accept="video/*"
+              accept=".mp4, .mkv"
               v-model="file"
               :state="Boolean(file)"
               placeholder="Choose a file or drop it here..."
