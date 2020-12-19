@@ -131,6 +131,7 @@ FileInfoResponse get_file_info() {
       r.streams.push_back(stream);
       free(fourcc);
     }
+    avformat_close_input(&pFormatContext);
     return r;
 }
 
@@ -177,15 +178,14 @@ FramesResponse get_frames(int offset) {
         if (video_stream_index == -1) {
           video_stream_index = i;
           nb_frames = pFormatContext->streams[i]->nb_frames;
+
+          // Calculate the nb_frames for MKV/WebM if nb_frames is 0.
+          if (nb_frames == 0) {
+            nb_frames = (pFormatContext->duration / 1000000) * pFormatContext->streams[i]->avg_frame_rate.num;
+          }
           pCodec = pLocalCodec;
           pCodecParameters = pLocalCodecParameters;
         }
-
-        printf("Video Codec: resolution %d x %d\n",
-          pLocalCodecParameters->width, pLocalCodecParameters->height);
-      } else if (pLocalCodecParameters->codec_type == AVMEDIA_TYPE_AUDIO) {
-        printf("Audio Codec: %d channels, sample rate %d\n",
-          pLocalCodecParameters->channels, pLocalCodecParameters->sample_rate);
       }
     }
 
@@ -230,7 +230,12 @@ FramesResponse get_frames(int offset) {
         }
         frame_count++;
       }
+      av_packet_unref(pPacket);
     }
+    avformat_close_input(&pFormatContext);
+    av_packet_free(&pPacket);
+    av_frame_free(&pFrame);
+    avcodec_free_context(&pCodecContext);
     return r;
 }
 
