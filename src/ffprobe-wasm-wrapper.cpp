@@ -131,6 +131,7 @@ FileInfoResponse get_file_info() {
       r.streams.push_back(stream);
       free(fourcc);
     }
+    avformat_close_input(&pFormatContext);
     return r;
 }
 
@@ -230,7 +231,12 @@ FramesResponse get_frames(int offset) {
         }
         frame_count++;
       }
+      av_packet_unref(pPacket);
     }
+    avformat_close_input(&pFormatContext);
+    av_packet_free(&pPacket);
+    av_frame_free(&pFrame);
+    avcodec_free_context(&pCodecContext);
     return r;
 }
 
