@@ -7,7 +7,7 @@
     <b-table stacked :items="items"></b-table>
 
     <h4>Streams</h4>
-    <b-table striped hover :items="streams"></b-table>
+    <b-table striped hover :items="info.streams"></b-table>
   </div>
 </template>
 
@@ -15,15 +15,6 @@
 export default {
   name: 'Overview',
   props: ['info'],
-  computed: {
-      streams() {
-          const s = [];
-          for (let i = 0; i < this.info.streams.size(); i++) {
-              s.push(this.info.streams.get(i));
-          }
-          return s;
-      }
-  },
   data() {
     return {
       items: [
@@ -38,9 +29,9 @@ export default {
       ],
       versions: [
         {
-          libavutil:  window.Module.avutil_version(),
-          libavcodec:  window.Module.avcodec_version(),
-          libavformat:  window.Module.avformat_version(),
+          libavutil:  this.info.versions.libavutil,
+          libavcodec:  this.info.versions.libavcodec,
+          libavformat:  this.info.versions.libavformat,
         }
       ]
     }
