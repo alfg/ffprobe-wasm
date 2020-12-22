@@ -1,4 +1,4 @@
-FROM emscripten/emsdk as build
+FROM emscripten/emsdk:2.0.11 as build
 
 ARG FFMPEG_VERSION=4.3.1
 ARG X264_VERSION=20170226-2245-stable
@@ -30,7 +30,7 @@ RUN cd /tmp/ && \
   wget http://ffmpeg.org/releases/ffmpeg-${FFMPEG_VERSION}.tar.gz && \
   tar zxf ffmpeg-${FFMPEG_VERSION}.tar.gz && rm ffmpeg-${FFMPEG_VERSION}.tar.gz
 
-ARG CFLAGS="-s USE_PTHREADS -O3 -I${PREFIX}/include"
+ARG CFLAGS="-s USE_PTHREADS=1 -O3 -I${PREFIX}/include"
 ARG LDFLAGS="$CFLAGS -L${PREFIX}/lib -s INITIAL_MEMORY=33554432"
 
 # Compile ffmpeg.

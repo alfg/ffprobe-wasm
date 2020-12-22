@@ -18,12 +18,12 @@
           :value="progress"
           max="100"></b-progress>
 
-        <div v-if="data">
+        <div v-if="info">
           <div class="mt-3">Selected file: {{ file ? `${file.name}: ${file.size} bytes` : '' }}</div>
 
           <b-tabs class="mt-4">
             <b-tab title="Overview" class="mt-2">
-              <div v-if="data">
+              <div v-if="info">
                 <Overview :info="info" />
               </div>
             </b-tab>
@@ -39,6 +39,8 @@
 import Overview from './Overview.vue';
 import Frames from './Frames.vue';
 
+const worker = new Worker('ffprobe-worker.js');
+
 export default {
   name: 'File',
   components: {
@@ -49,13 +51,14 @@ export default {
     return {
       file: null,
       data: null,
+      info: null,
       progress: 0,
       showProgress: false,
     }
   },
-  computed: {
-    info() {
-      return this.data && window.Module.get_file_info();
+  created() {
+    worker.onmessage = (e) => {
+      this.info = e.data;
     }
   },
   methods: {
@@ -65,21 +68,7 @@ export default {
       this.showProgress = true;
 
       const file = event.dataTransfer ? event.dataTransfer.files[0] : event.target.files[0];
-      const reader = new FileReader();
-
-      // reader.onload = e => this.$emit("load", event.target.result);
-      reader.onload = (event) => {
-        this.progress = 100;
-        this.data = new Uint8Array(event.target.result);
-        window.Module.FS.writeFile('file', new Uint8Array(this.data));
-        setTimeout(() => { this.showProgress = false; }, 2000);
-      }
-      reader.onprogress = (event) => {
-        if (event.lengthComputable) {
-          this.progress = parseInt(((event.loaded / event.total) * 100), 10);
-        }
-      }
-      reader.readAsArrayBuffer(file);
+      worker.postMessage([ file ]);
     }
   }
 }

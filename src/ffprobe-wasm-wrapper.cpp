@@ -1,5 +1,6 @@
 #include <vector>
 #include <string>
+#include <vector>
 #include <inttypes.h>
 #include <emscripten.h>
 #include <emscripten/bind.h>
@@ -65,8 +66,8 @@ typedef struct FramesResponse {
   int nb_frames;
 } FramesResponse;
 
-FileInfoResponse get_file_info() {
-    FILE *file = fopen("file", "rb");
+FileInfoResponse get_file_info(std::string filename) {
+    FILE *file = fopen(filename.c_str(), "rb");
     if (!file) {
       printf("cannot open file\n");
     }
@@ -79,9 +80,8 @@ FileInfoResponse get_file_info() {
 
     // Open the file and read header.
     int ret;
-    if ((ret = avformat_open_input(&pFormatContext, "file", NULL, NULL)) < 0) {
-        printf("ERROR: could not open the file. Error: %d\n", ret);
-        printf("%s", av_err2str(ret));
+    if ((ret = avformat_open_input(&pFormatContext, filename.c_str(), NULL, NULL)) < 0) {
+        printf("ERROR: %s\n", av_err2str(ret));
     }
 
     // Get stream info from format.
@@ -135,10 +135,10 @@ FileInfoResponse get_file_info() {
     return r;
 }
 
-FramesResponse get_frames(int offset) {
+FramesResponse get_frames(std::string filename, int offset) {
     av_log_set_level(AV_LOG_QUIET); // No logging output for libav.
 
-    FILE *file = fopen("file", "rb");
+    FILE *file = fopen(filename.c_str(), "rb");
     if (!file) {
       printf("cannot open file\n");
     }
@@ -151,9 +151,8 @@ FramesResponse get_frames(int offset) {
 
     // Open the file and read header.
     int ret;
-    if ((ret = avformat_open_input(&pFormatContext, "file", NULL, NULL)) < 0) {
-        printf("ERROR: could not open the file. Error: %d\n", ret);
-        printf("%s", av_err2str(ret));
+    if ((ret = avformat_open_input(&pFormatContext, filename.c_str(), NULL, NULL)) < 0) {
+        printf("ERROR: %s\n", av_err2str(ret));
     }
 
     // Get stream info from format.
@@ -238,7 +237,6 @@ FramesResponse get_frames(int offset) {
     avcodec_free_context(&pCodecContext);
     return r;
 }
-
 
 EMSCRIPTEN_BINDINGS(constants) {
     function("avformat_version", &c_avformat_version);
