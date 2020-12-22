@@ -28,7 +28,7 @@
               </div>
             </b-tab>
             <b-tab title="Frames" class="mt-2" lazy>
-              <Frames />
+              <Frames :file="file" />
             </b-tab>
           </b-tabs>
         </div>
@@ -38,8 +38,6 @@
 <script>
 import Overview from './Overview.vue';
 import Frames from './Frames.vue';
-
-const worker = new Worker('ffprobe-worker.js');
 
 export default {
   name: 'File',
@@ -57,7 +55,7 @@ export default {
     }
   },
   created() {
-    worker.onmessage = (e) => {
+    this.$worker.onmessage = (e) => {
       this.info = e.data;
     }
   },
@@ -68,7 +66,7 @@ export default {
       this.showProgress = true;
 
       const file = event.dataTransfer ? event.dataTransfer.files[0] : event.target.files[0];
-      worker.postMessage([ file ]);
+      this.$worker.postMessage([ 'get_file_info', file ]);
     }
   }
 }
