@@ -12,12 +12,6 @@
           ></b-form-file>
         </b-form-group>
 
-        <b-progress
-          height="2px"
-          v-if="showProgress"
-          :value="progress"
-          max="100"></b-progress>
-
         <div v-if="info">
           <div class="mt-3">Selected file: {{ file ? `${file.name}: ${file.size} bytes` : '' }}</div>
 
@@ -50,8 +44,6 @@ export default {
       file: null,
       data: null,
       info: null,
-      progress: 0,
-      showProgress: false,
     }
   },
   created() {
@@ -62,9 +54,6 @@ export default {
   methods: {
     onFile(event) {
       this.data = null;
-      this.progress = 0;
-      this.showProgress = true;
-
       const file = event.dataTransfer ? event.dataTransfer.files[0] : event.target.files[0];
       this.$worker.postMessage([ 'get_file_info', file ]);
     }
