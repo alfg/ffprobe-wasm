@@ -15,9 +15,9 @@
 export default {
   name: 'Overview',
   props: ['info'],
-  data() {
-    return {
-      items: [
+  computed: {
+    items() {
+      return [
         {
           name: this.info.name,
           duration: this.info.duration,
@@ -26,15 +26,17 @@ export default {
           nb_streams: this.info.nb_streams,
           flags: this.info.flags,
         },
-      ],
-      versions: [
+      ]
+    },
+    versions() {
+      return [
         {
           libavutil:  this.info.versions.libavutil,
           libavcodec:  this.info.versions.libavcodec,
           libavformat:  this.info.versions.libavformat,
-        }
+        },
       ]
-    }
-  }
+    },
+  },
 }
 </script>

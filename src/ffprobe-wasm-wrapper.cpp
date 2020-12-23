@@ -67,6 +67,8 @@ typedef struct FramesResponse {
 } FramesResponse;
 
 FileInfoResponse get_file_info(std::string filename) {
+    av_log_set_level(AV_LOG_QUIET); // No logging output for libav.
+
     FILE *file = fopen(filename.c_str(), "rb");
     if (!file) {
       printf("cannot open file\n");
