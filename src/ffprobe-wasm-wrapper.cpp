@@ -64,6 +64,7 @@ typedef struct FileInfoResponse {
 typedef struct FramesResponse {
   std::vector<Frame> frames;
   int nb_frames;
+  int gop_size;
 } FramesResponse;
 
 FileInfoResponse get_file_info(std::string filename) {
@@ -200,8 +201,10 @@ FramesResponse get_frames(std::string filename, int offset) {
     AVPacket *pPacket = av_packet_alloc();
     AVFrame *pFrame = av_frame_alloc();
 
-    int how_many_packets_to_process = 48; // per page.
-    int frame_count = 1;
+    int max_packets_to_process = 1000;
+    int frame_count = 0;
+    int key_frames = 0;
+    int gop_size = 0;
 
     // Read video frames.
     while (av_read_frame(pFormatContext, pPacket) >= 0) {
@@ -217,6 +220,12 @@ FramesResponse get_frames(std::string filename, int offset) {
               continue;
             }
 
+            // Track keyframes so we paginate by each GOP.
+            if (pFrame->key_frame == 1) key_frames++;
+
+            // Break at the next keyframe found.
+            if (key_frames > 1) break;
+
             Frame f = {
               .frame_number = frame_count,
               .pict_type = (char) av_get_picture_type_char(pFrame->pict_type),
@@ -226,7 +235,7 @@ FramesResponse get_frames(std::string filename, int offset) {
             };
             r.frames.push_back(f);
 
-            if (--how_many_packets_to_process <= 0) break;
+            if (--max_packets_to_process <= 0) break;
           }
         }
         frame_count++;
@@ -237,6 +246,8 @@ FramesResponse get_frames(std::string filename, int offset) {
     av_packet_free(&pPacket);
     av_frame_free(&pFrame);
     avcodec_free_context(&pCodecContext);
+
+    r.gop_size = frame_count - offset;
     return r;
 }
 
@@ -287,6 +298,7 @@ EMSCRIPTEN_BINDINGS(structs) {
   emscripten::value_object<FramesResponse>("FramesResponse")
   .field("frames", &FramesResponse::frames)
   .field("nb_frames", &FramesResponse::nb_frames)
+  .field("gop_size", &FramesResponse::gop_size)
   ;
   function("get_frames", &get_frames);
 }

@@ -15,7 +15,7 @@
         <div v-if="info">
           <div class="mt-3">Selected file: {{ file ? `${file.name}: ${file.size} bytes` : '' }}</div>
 
-          <b-tabs class="mt-4">
+          <b-tabs class="mt-4" v-model="tabIndex">
             <b-tab title="Overview" class="mt-2">
               <div v-if="info">
                 <Overview :info="info" />
@@ -42,18 +42,16 @@ export default {
   data() {
     return {
       file: null,
-      data: null,
       info: null,
-    }
-  },
-  created() {
-    this.$worker.onmessage = (e) => {
-      this.info = e.data;
+      tabIndex: 0,
     }
   },
   methods: {
     onFile(event) {
-      this.data = null;
+      this.tabIndex = 0;
+      this.$worker.onmessage = (e) => {
+        this.info = e.data;
+      }
       const file = event.dataTransfer ? event.dataTransfer.files[0] : event.target.files[0];
       this.$worker.postMessage([ 'get_file_info', file ]);
     }
