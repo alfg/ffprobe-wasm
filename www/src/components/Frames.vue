@@ -3,6 +3,7 @@
     <h4>Frames</h4>
     <div v-if="!data">Loading...</div>
     <div v-if="data">
+      <p class="float-left">GOP Size: {{ data.gop_size }}</p>
       <p class="text-right">Total: {{ data.nb_frames }}</p>
 
       <b-pagination
@@ -18,6 +19,9 @@
           <div class="text-center text-primary my-2">
             <b-spinner class="align-middle"></b-spinner>
           </div>
+        </template>
+        <template #cell(frame_number)="data">
+          {{ data.value + 1 }}
         </template>
         <template #cell(pict_type)="data">
           {{ String.fromCharCode(data.value) }}
@@ -43,11 +47,13 @@ export default {
     return {
       data: null,
       currentPage: 1,
-      perPage: 48,
       isBusy: false,
     };
   },
   computed: {
+    perPage() {
+      return this.data.gop_size;
+    },
     pages() {
       return this.data.nb_frames;
     },
