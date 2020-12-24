@@ -48,6 +48,7 @@ typedef struct Frame {
   char pict_type;
   int pts;
   int dts;
+  int pos;
   int pkt_size;
 } Frame;
 
@@ -65,6 +66,8 @@ typedef struct FramesResponse {
   std::vector<Frame> frames;
   int nb_frames;
   int gop_size;
+  int duration;
+  double time_base;
 } FramesResponse;
 
 FileInfoResponse get_file_info(std::string filename) {
@@ -138,7 +141,7 @@ FileInfoResponse get_file_info(std::string filename) {
     return r;
 }
 
-FramesResponse get_frames(std::string filename, int offset) {
+FramesResponse get_frames(std::string filename, int timestamp) {
     av_log_set_level(AV_LOG_QUIET); // No logging output for libav.
 
     FILE *file = fopen(filename.c_str(), "rb");
@@ -191,8 +194,18 @@ FramesResponse get_frames(std::string filename, int offset) {
       }
     }
 
+    AVRational stream_time_base = pFormatContext->streams[video_stream_index]->time_base;
+    // printf("stream_time_base: %d / %d = %.5f\n", stream_time_base.num, stream_time_base.den, av_q2d(stream_time_base));
+
     FramesResponse r;
     r.nb_frames = nb_frames;
+    r.time_base = av_q2d(stream_time_base);
+    r.duration = pFormatContext->streams[video_stream_index]->duration;
+
+    // If the duration value isn't in the stream, get from the FormatContext.
+    if (r.duration == 0) {
+      r.duration = pFormatContext->duration * r.time_base;
+    }
 
     AVCodecContext *pCodecContext = avcodec_alloc_context3(pCodec);
     avcodec_parameters_to_context(pCodecContext, pCodecParameters);
@@ -204,13 +217,13 @@ FramesResponse get_frames(std::string filename, int offset) {
     int max_packets_to_process = 1000;
     int frame_count = 0;
     int key_frames = 0;
-    int gop_size = 0;
+
+    // Seek to frame from the given timestamp.
+    av_seek_frame(pFormatContext, video_stream_index, timestamp, AVSEEK_FLAG_ANY);
 
     // Read video frames.
     while (av_read_frame(pFormatContext, pPacket) >= 0) {
       if (pPacket->stream_index == video_stream_index) {
-        if (frame_count >= offset) {
-
           int response = 0;
           response = avcodec_send_packet(pCodecContext, pPacket);
 
@@ -231,23 +244,24 @@ FramesResponse get_frames(std::string filename, int offset) {
               .pict_type = (char) av_get_picture_type_char(pFrame->pict_type),
               .pts = (int) pPacket->pts,
               .dts = (int) pPacket->dts,
+              .pos = (int) pPacket->pos,
               .pkt_size = pFrame->pkt_size,
             };
             r.frames.push_back(f);
 
             if (--max_packets_to_process <= 0) break;
           }
-        }
         frame_count++;
       }
       av_packet_unref(pPacket);
     }
+    r.gop_size = frame_count;
+
     avformat_close_input(&pFormatContext);
     av_packet_free(&pPacket);
     av_frame_free(&pFrame);
     avcodec_free_context(&pCodecContext);
 
-    r.gop_size = frame_count - offset;
     return r;
 }
 
@@ -281,6 +295,7 @@ EMSCRIPTEN_BINDINGS(structs) {
   .field("pict_type", &Frame::pict_type)
   .field("pts", &Frame::pts)
   .field("dts", &Frame::dts)
+  .field("pos", &Frame::pos)
   .field("pkt_size", &Frame::pkt_size);
   register_vector<Frame>("Frame");
 
@@ -299,6 +314,8 @@ EMSCRIPTEN_BINDINGS(structs) {
   .field("frames", &FramesResponse::frames)
   .field("nb_frames", &FramesResponse::nb_frames)
   .field("gop_size", &FramesResponse::gop_size)
+  .field("duration", &FramesResponse::duration)
+  .field("time_base", &FramesResponse::time_base)
   ;
   function("get_frames", &get_frames);
 }
