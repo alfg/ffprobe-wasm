@@ -86,6 +86,7 @@ export default {
       ],
       examples: [
         { name: 'Video Counter (10min, unfragmented, AVC Baseline)', value: 'https://video-examples-public.s3.us-west-2.amazonaws.com/video_counter_10min_unfragmented_avc.mp4' },
+        { name: 'Tears of Steel 360p (00:12:14, unfragmented, AVC Baseline, 67.85 MB)', value: 'https://video-examples-public.s3.us-west-2.amazonaws.com/tears-of-steel-360p.mp4' },
       ],
       protocol: 'file',
       file: null,

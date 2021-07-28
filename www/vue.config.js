@@ -5,9 +5,6 @@ module.exports = {
       title: 'FFProbe',
     }
   },
-  publicPath: process.env.NODE_ENV === 'production'
-    ? '/ffprobe-wasm/'
-    : '/',
   configureWebpack: {
     devServer: {
       headers: {
