@@ -1,5 +1,5 @@
 [[headers]]
   for = "/*"
     [headers.values]
-    Cross-Origin-Resource-Policy = "require-corp"
+    Cross-Origin-Embedder-Policy = "require-corp"
     Cross-Origin-Opener-Policy = "same-origin"
