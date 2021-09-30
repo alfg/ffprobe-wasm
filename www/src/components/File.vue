@@ -121,9 +121,9 @@ export default {
       }
       xhr.onload = (event) => {
         this.progress = 100;
-        const file = new File([event.target.response], "file");
-        this.size = file.size;
-        this.$worker.postMessage([ 'get_file_info', file ]);
+        this.file = new File([event.target.response], "file");
+        this.size = this.file.size;
+        this.$worker.postMessage([ 'get_file_info', this.file ]);
         setTimeout(() => { this.showProgress = false; }, 2000);
       }
       xhr.open('GET', this.url, true);
