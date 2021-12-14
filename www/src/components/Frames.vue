@@ -54,6 +54,7 @@ export default {
         { name: 'Duration', value: this.data.duration },
         { name: 'Timebase', value: this.data.time_base },
         { name: 'Total Frames', value: this.data.nb_frames },
+        { name: 'FPS', value: this.data.avg_frame_rate },
       ]
     }
   },

@@ -68,6 +68,7 @@ typedef struct FramesResponse {
   int gop_size;
   int duration;
   double time_base;
+  double avg_frame_rate;
 } FramesResponse;
 
 FileInfoResponse get_file_info(std::string filename) {
@@ -195,11 +196,13 @@ FramesResponse get_frames(std::string filename, int timestamp) {
     }
 
     AVRational stream_time_base = pFormatContext->streams[video_stream_index]->time_base;
+    AVRational avg_frame_rate = pFormatContext->streams[video_stream_index]->avg_frame_rate;
     // printf("stream_time_base: %d / %d = %.5f\n", stream_time_base.num, stream_time_base.den, av_q2d(stream_time_base));
 
     FramesResponse r;
     r.nb_frames = nb_frames;
     r.time_base = av_q2d(stream_time_base);
+    r.avg_frame_rate = av_q2d(avg_frame_rate);
     r.duration = pFormatContext->streams[video_stream_index]->duration;
 
     // If the duration value isn't in the stream, get from the FormatContext.
@@ -316,6 +319,7 @@ EMSCRIPTEN_BINDINGS(structs) {
   .field("gop_size", &FramesResponse::gop_size)
   .field("duration", &FramesResponse::duration)
   .field("time_base", &FramesResponse::time_base)
+  .field("avg_frame_rate", &FramesResponse::avg_frame_rate)
   ;
   function("get_frames", &get_frames);
 }
