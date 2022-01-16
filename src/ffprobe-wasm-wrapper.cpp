@@ -43,6 +43,11 @@ typedef struct Stream {
   int frame_size;
 } Stream;
 
+typedef struct Chapter {
+  int id;
+  int start;
+} Chapter;
+
 typedef struct Frame {
   int frame_number;
   char pict_type;
@@ -60,6 +65,8 @@ typedef struct FileInfoResponse {
   int nb_streams;
   int flags;
   std::vector<Stream> streams;
+  int nb_chapters;
+  std::vector<Chapter> chapters;
 } FileInfoResponse;
 
 typedef struct FramesResponse {
@@ -103,7 +110,8 @@ FileInfoResponse get_file_info(std::string filename) {
       .duration = (int)pFormatContext->duration,
       .url = pFormatContext->url,
       .nb_streams = (int)pFormatContext->nb_streams,
-      .flags = pFormatContext->flags
+      .flags = pFormatContext->flags,
+      .nb_chapters = (int)pFormatContext->nb_chapters
     };
 
     // Loop through the streams.
@@ -138,6 +146,20 @@ FileInfoResponse get_file_info(std::string filename) {
       r.streams.push_back(stream);
       free(fourcc);
     }
+
+    // Loop through the chapters (if any).
+    for (int i = 0; i < pFormatContext->nb_chapters; i++) {
+      AVChapter *chapter = pFormatContext->chapters[i];
+
+      printf("test: %d\n", (int)chapter->id);
+
+      Chapter c = {
+        .id = (int)chapter->id,
+        .start = (int)chapter->start,
+      };
+      r.chapters.push_back(c);
+    }
+
     avformat_close_input(&pFormatContext);
     return r;
 }
@@ -293,6 +315,12 @@ EMSCRIPTEN_BINDINGS(structs) {
   ;
   register_vector<Stream>("Stream");
 
+  emscripten::value_object<Chapter>("Chapter")
+  .field("id", &Chapter::id)
+  .field("start", &Chapter::start)
+  ;
+  register_vector<Chapter>("Chapter");
+
   emscripten::value_object<Frame>("Frame")
   .field("frame_number", &Frame::frame_number)
   .field("pict_type", &Frame::pict_type)
@@ -310,6 +338,8 @@ EMSCRIPTEN_BINDINGS(structs) {
   .field("nb_streams", &FileInfoResponse::nb_streams)
   .field("flags", &FileInfoResponse::flags)
   .field("streams", &FileInfoResponse::streams)
+  .field("nb_chapters", &FileInfoResponse::nb_chapters)
+  .field("chapters", &FileInfoResponse::chapters)
   ;
   function("get_file_info", &get_file_info);
 

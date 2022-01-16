@@ -8,6 +8,9 @@
 
     <h4>Streams</h4>
     <b-table striped hover :items="info.streams"></b-table>
+
+    <h4>Chapters</h4>
+    <b-table striped hover :items="info.chapters"></b-table>
   </div>
 </template>
 
@@ -17,6 +20,7 @@ export default {
   props: ['info'],
   computed: {
     items() {
+      console.log(this.info);
       return [
         {
           name: this.info.name,
@@ -25,6 +29,7 @@ export default {
           url: this.info.url,
           nb_streams: this.info.nb_streams,
           flags: this.info.flags,
+          nb_chapters: this.info.nb_chapters,
         },
       ]
     },

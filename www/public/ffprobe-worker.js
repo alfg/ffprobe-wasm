@@ -21,6 +21,12 @@ onmessage = (e) => {
                 s.push(info.streams.get(i));
             }
 
+            // Remap chapters into collection.
+            const c = [];
+            for (let i = 0; i < info.chapters.size(); i++) {
+                c.push(info.chapters.get(i));
+            }
+
             const versions = {
                 libavutil:  Module.avutil_version(),
                 libavcodec:  Module.avcodec_version(),
@@ -31,6 +37,7 @@ onmessage = (e) => {
             data = {
                 ...info,
                 streams: s,
+                chapters: c,
                 versions,
             }
             postMessage(data);
