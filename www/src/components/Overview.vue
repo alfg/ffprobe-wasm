@@ -9,8 +9,14 @@
     <h4>Streams</h4>
     <b-table striped hover :items="info.streams"></b-table>
 
-    <h4>Chapters</h4>
-    <b-table striped hover :items="info.chapters"></b-table>
+    <div v-show="info.chapters.length > 0">
+      <h4>Chapters</h4>
+      <b-table striped hover :items="info.chapters">
+        <template #cell(tags)="data">
+          <b-table-lite small stacked outlined :items="data.item.tags"></b-table-lite>
+        </template>
+      </b-table>
+    </div>
   </div>
 </template>
 

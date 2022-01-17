@@ -24,7 +24,14 @@ onmessage = (e) => {
             // Remap chapters into collection.
             const c = [];
             for (let i = 0; i < info.chapters.size(); i++) {
-                c.push(info.chapters.get(i));
+                const t = info.chapters.get(i).tags.get(0);
+
+                // Remap tags too.
+                const tags = [];
+                const obj = {};
+                obj[t.key] = t.value;
+                tags.push(obj);
+                c.push({...info.chapters.get(i), ...{tags}});
             }
 
             const versions = {

@@ -11,6 +11,7 @@ extern "C" {
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
 #include <libavutil/avutil.h>
+#include <libavutil/bprint.h>
 #include <libavutil/imgutils.h>
 };
 
@@ -43,9 +44,17 @@ typedef struct Stream {
   int frame_size;
 } Stream;
 
+typedef struct Tag {
+  std::string key;
+  std::string value;
+} Tag;
+
 typedef struct Chapter {
   int id;
+  std::string time_base;
   int start;
+  int end;
+  std::vector<Tag> tags;
 } Chapter;
 
 typedef struct Frame {
@@ -153,10 +162,28 @@ FileInfoResponse get_file_info(std::string filename) {
 
       printf("test: %d\n", (int)chapter->id);
 
+      // Format timebase string to buf.
+      AVBPrint buf;
+      av_bprint_init(&buf, 0, AV_BPRINT_SIZE_AUTOMATIC);
+      av_bprintf(&buf, "%d%s%d", chapter->time_base.num, (char *)"/", chapter->time_base.den);
+
       Chapter c = {
         .id = (int)chapter->id,
+        .time_base = buf.str,
         .start = (int)chapter->start,
+        .end = (int)chapter->end,
       };
+
+      // Add tags to chapter.
+      const AVDictionaryEntry *tag = NULL;
+      while ((tag = av_dict_get(chapter->metadata, "", tag, AV_DICT_IGNORE_SUFFIX))) {
+        Tag t = {
+          .key = tag->key,
+          .value = tag->value,
+        };
+        c.tags.push_back(t);
+      }
+
       r.chapters.push_back(c);
     }
 
@@ -315,9 +342,18 @@ EMSCRIPTEN_BINDINGS(structs) {
   ;
   register_vector<Stream>("Stream");
 
+  emscripten::value_object<Tag>("Tag")
+  .field("key", &Tag::key)
+  .field("value", &Tag::value)
+  ;
+  register_vector<Tag>("Tag");
+
   emscripten::value_object<Chapter>("Chapter")
   .field("id", &Chapter::id)
+  .field("time_base", &Chapter::time_base)
   .field("start", &Chapter::start)
+  .field("end", &Chapter::end)
+  .field("tags", &Chapter::tags)
   ;
   register_vector<Chapter>("Chapter");
 
