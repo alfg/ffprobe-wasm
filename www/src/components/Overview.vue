@@ -26,7 +26,6 @@ export default {
   props: ['info'],
   computed: {
     items() {
-      console.log(this.info);
       return [
         {
           name: this.info.name,
