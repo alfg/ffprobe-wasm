@@ -160,8 +160,6 @@ FileInfoResponse get_file_info(std::string filename) {
     for (int i = 0; i < pFormatContext->nb_chapters; i++) {
       AVChapter *chapter = pFormatContext->chapters[i];
 
-      printf("test: %d\n", (int)chapter->id);
-
       // Format timebase string to buf.
       AVBPrint buf;
       av_bprint_init(&buf, 0, AV_BPRINT_SIZE_AUTOMATIC);
