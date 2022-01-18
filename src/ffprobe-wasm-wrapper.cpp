@@ -11,6 +11,7 @@ extern "C" {
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
 #include <libavutil/avutil.h>
+#include <libavutil/bprint.h>
 #include <libavutil/imgutils.h>
 };
 
@@ -43,6 +44,19 @@ typedef struct Stream {
   int frame_size;
 } Stream;
 
+typedef struct Tag {
+  std::string key;
+  std::string value;
+} Tag;
+
+typedef struct Chapter {
+  int id;
+  std::string time_base;
+  int start;
+  int end;
+  std::vector<Tag> tags;
+} Chapter;
+
 typedef struct Frame {
   int frame_number;
   char pict_type;
@@ -60,6 +74,8 @@ typedef struct FileInfoResponse {
   int nb_streams;
   int flags;
   std::vector<Stream> streams;
+  int nb_chapters;
+  std::vector<Chapter> chapters;
 } FileInfoResponse;
 
 typedef struct FramesResponse {
@@ -103,7 +119,8 @@ FileInfoResponse get_file_info(std::string filename) {
       .duration = (int)pFormatContext->duration,
       .url = pFormatContext->url,
       .nb_streams = (int)pFormatContext->nb_streams,
-      .flags = pFormatContext->flags
+      .flags = pFormatContext->flags,
+      .nb_chapters = (int)pFormatContext->nb_chapters
     };
 
     // Loop through the streams.
@@ -138,6 +155,36 @@ FileInfoResponse get_file_info(std::string filename) {
       r.streams.push_back(stream);
       free(fourcc);
     }
+
+    // Loop through the chapters (if any).
+    for (int i = 0; i < pFormatContext->nb_chapters; i++) {
+      AVChapter *chapter = pFormatContext->chapters[i];
+
+      // Format timebase string to buf.
+      AVBPrint buf;
+      av_bprint_init(&buf, 0, AV_BPRINT_SIZE_AUTOMATIC);
+      av_bprintf(&buf, "%d%s%d", chapter->time_base.num, (char *)"/", chapter->time_base.den);
+
+      Chapter c = {
+        .id = (int)chapter->id,
+        .time_base = buf.str,
+        .start = (int)chapter->start,
+        .end = (int)chapter->end,
+      };
+
+      // Add tags to chapter.
+      const AVDictionaryEntry *tag = NULL;
+      while ((tag = av_dict_get(chapter->metadata, "", tag, AV_DICT_IGNORE_SUFFIX))) {
+        Tag t = {
+          .key = tag->key,
+          .value = tag->value,
+        };
+        c.tags.push_back(t);
+      }
+
+      r.chapters.push_back(c);
+    }
+
     avformat_close_input(&pFormatContext);
     return r;
 }
@@ -293,6 +340,21 @@ EMSCRIPTEN_BINDINGS(structs) {
   ;
   register_vector<Stream>("Stream");
 
+  emscripten::value_object<Tag>("Tag")
+  .field("key", &Tag::key)
+  .field("value", &Tag::value)
+  ;
+  register_vector<Tag>("Tag");
+
+  emscripten::value_object<Chapter>("Chapter")
+  .field("id", &Chapter::id)
+  .field("time_base", &Chapter::time_base)
+  .field("start", &Chapter::start)
+  .field("end", &Chapter::end)
+  .field("tags", &Chapter::tags)
+  ;
+  register_vector<Chapter>("Chapter");
+
   emscripten::value_object<Frame>("Frame")
   .field("frame_number", &Frame::frame_number)
   .field("pict_type", &Frame::pict_type)
@@ -310,6 +372,8 @@ EMSCRIPTEN_BINDINGS(structs) {
   .field("nb_streams", &FileInfoResponse::nb_streams)
   .field("flags", &FileInfoResponse::flags)
   .field("streams", &FileInfoResponse::streams)
+  .field("nb_chapters", &FileInfoResponse::nb_chapters)
+  .field("chapters", &FileInfoResponse::chapters)
   ;
   function("get_file_info", &get_file_info);
 
