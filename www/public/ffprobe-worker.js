@@ -18,19 +18,22 @@ onmessage = (e) => {
             // Remap streams into collection.
             const s = [];
             for (let i = 0; i < info.streams.size(); i++) {
-                s.push(info.streams.get(i));
+                const tags = {};
+                for (let j = 0; j < info.streams.get(i).tags.size(); j++) {
+                    const t = info.streams.get(i).tags.get(j);
+                    tags[t.key] = t.value;
+                }
+                s.push({...info.streams.get(i), ...{ tags}});
             }
 
             // Remap chapters into collection.
             const c = [];
             for (let i = 0; i < info.chapters.size(); i++) {
-                const t = info.chapters.get(i).tags.get(0);
-
-                // Remap tags too.
-                const tags = [];
-                const obj = {};
-                obj[t.key] = t.value;
-                tags.push(obj);
+                const tags = {};
+                for (let j = 0; j < info.chapters.get(i).tags.size(); j++) {
+                    const t = info.chapters.get(i).tags.get(j);
+                    tags[t.key] = t.value;
+                }
                 c.push({...info.chapters.get(i), ...{tags}});
             }
 

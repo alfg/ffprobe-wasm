@@ -27,6 +27,11 @@ const std::string c_avutil_version() {
     return AV_STRINGIFY(LIBAVUTIL_VERSION);
 }
 
+typedef struct Tag {
+  std::string key;
+  std::string value;
+} Tag;
+
 typedef struct Stream {
   int id;
   int start_time;
@@ -42,12 +47,8 @@ typedef struct Stream {
   int channels;
   int sample_rate;
   int frame_size;
+  std::vector<Tag> tags;
 } Stream;
-
-typedef struct Tag {
-  std::string key;
-  std::string value;
-} Tag;
 
 typedef struct Chapter {
   int id;
@@ -152,6 +153,17 @@ FileInfoResponse get_file_info(std::string filename) {
         .sample_rate = (int)pLocalCodecParameters->sample_rate,
         .frame_size = (int)pLocalCodecParameters->frame_size,
       };
+
+      // Add tags to stream.
+      const AVDictionaryEntry *tag = NULL;
+      while ((tag = av_dict_get(pFormatContext->streams[i]->metadata, "", tag, AV_DICT_IGNORE_SUFFIX))) {
+        Tag t = {
+          .key = tag->key,
+          .value = tag->value,
+        };
+        stream.tags.push_back(t);
+      }
+
       r.streams.push_back(stream);
       free(fourcc);
     }
@@ -322,6 +334,12 @@ EMSCRIPTEN_BINDINGS(constants) {
 }
 
 EMSCRIPTEN_BINDINGS(structs) {
+  emscripten::value_object<Tag>("Tag")
+  .field("key", &Tag::key)
+  .field("value", &Tag::value)
+  ;
+  register_vector<Tag>("Tag");
+
   emscripten::value_object<Stream>("Stream")
   .field("id", &Stream::id)
   .field("start_time", &Stream::start_time)
@@ -337,14 +355,9 @@ EMSCRIPTEN_BINDINGS(structs) {
   .field("channels", &Stream::channels)
   .field("sample_rate", &Stream::sample_rate)
   .field("frame_size", &Stream::frame_size)
+  .field("tags", &Stream::tags)
   ;
   register_vector<Stream>("Stream");
-
-  emscripten::value_object<Tag>("Tag")
-  .field("key", &Tag::key)
-  .field("value", &Tag::value)
-  ;
-  register_vector<Tag>("Tag");
 
   emscripten::value_object<Chapter>("Chapter")
   .field("id", &Chapter::id)
