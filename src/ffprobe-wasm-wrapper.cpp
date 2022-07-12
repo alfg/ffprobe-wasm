@@ -34,12 +34,12 @@ typedef struct Tag {
 
 typedef struct Stream {
   int id;
-  int start_time;
-  int duration;
+  float start_time;
+  float duration;
   int codec_type;
   std::string codec_name;
   std::string format;
-  int bit_rate;
+  float bit_rate;
   std::string profile;
   int level;
   int width;
@@ -53,8 +53,8 @@ typedef struct Stream {
 typedef struct Chapter {
   int id;
   std::string time_base;
-  int start;
-  int end;
+  float start;
+  float end;
   std::vector<Tag> tags;
 } Chapter;
 
@@ -69,8 +69,8 @@ typedef struct Frame {
 
 typedef struct FileInfoResponse {
   std::string name;
-  int bit_rate;
-  int duration;
+  float bit_rate;
+  float duration;
   std::string url;
   int nb_streams;
   int flags;
@@ -83,7 +83,7 @@ typedef struct FramesResponse {
   std::vector<Frame> frames;
   int nb_frames;
   int gop_size;
-  int duration;
+  float duration;
   double time_base;
   double avg_frame_rate;
 } FramesResponse;
@@ -116,8 +116,8 @@ FileInfoResponse get_file_info(std::string filename) {
     // Initialize response struct with format data.
     FileInfoResponse r = {
       .name = pFormatContext->iformat->name,
-      .bit_rate = (int)pFormatContext->bit_rate,
-      .duration = (int)pFormatContext->duration,
+      .bit_rate = (float)pFormatContext->bit_rate,
+      .duration = (float)pFormatContext->duration,
       .url = pFormatContext->url,
       .nb_streams = (int)pFormatContext->nb_streams,
       .flags = pFormatContext->flags,
@@ -139,12 +139,12 @@ FileInfoResponse get_file_info(std::string filename) {
 
       Stream stream = {
         .id = (int)pFormatContext->streams[i]->id,
-        .start_time = (int)pFormatContext->streams[i]->start_time,
-        .duration = (int)pFormatContext->streams[i]->duration,
+        .start_time = (float)pFormatContext->streams[i]->start_time,
+        .duration = (float)pFormatContext->streams[i]->duration,
         .codec_type = (int)pLocalCodecParameters->codec_type,
         .codec_name = fourcc,
         .format = av_get_pix_fmt_name((AVPixelFormat)pLocalCodecParameters->format),
-        .bit_rate = (int)pLocalCodecParameters->bit_rate,
+        .bit_rate = (float)pLocalCodecParameters->bit_rate,
         .profile = avcodec_profile_name(pLocalCodecParameters->codec_id, pLocalCodecParameters->profile),
         .level = (int)pLocalCodecParameters->level,
         .width = (int)pLocalCodecParameters->width,
@@ -180,8 +180,8 @@ FileInfoResponse get_file_info(std::string filename) {
       Chapter c = {
         .id = (int)chapter->id,
         .time_base = buf.str,
-        .start = (int)chapter->start,
-        .end = (int)chapter->end,
+        .start = (float)chapter->start,
+        .end = (float)chapter->end,
       };
 
       // Add tags to chapter.
