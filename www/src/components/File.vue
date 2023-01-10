@@ -11,7 +11,7 @@
               <b-form-file
                   v-if="protocol === 'file'"
                   id="file"
-                  accept=".mp4, .mkv"
+                  accept=".mp4, .mkv, .mp3"
                   v-model="file"
                   :state="Boolean(file)"
                   placeholder="Choose a file or drop it here..."
@@ -59,7 +59,7 @@
               <Overview :info="data" />
             </div>
           </b-tab>
-          <b-tab title="Frames" class="mt-2" lazy>
+          <b-tab v-if="file.type !== 'audio/mpeg'" title="Frames" class="mt-2" lazy>
             <Frames :file="file" />
           </b-tab>
         </b-tabs>
