@@ -11,7 +11,7 @@
               <b-form-file
                   v-if="protocol === 'file'"
                   id="file"
-                  accept=".mp4, .mkv, .mp3"
+                  accept=".mp4, .mkv, .mp3, .avi"
                   v-model="file"
                   :state="Boolean(file)"
                   placeholder="Choose a file or drop it here..."
