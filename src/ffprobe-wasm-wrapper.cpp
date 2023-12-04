@@ -1,5 +1,6 @@
 #include <vector>
 #include <string>
+#include <sstream>
 #include <vector>
 #include <inttypes.h>
 #include <emscripten.h>
@@ -36,7 +37,7 @@ typedef struct Stream {
   int id;
   float start_time;
   float duration;
-  int codec_type;
+  std::string codec_type;
   std::string codec_name;
   std::string format;
   float bit_rate;
@@ -48,6 +49,7 @@ typedef struct Stream {
   int sample_rate;
   int frame_size;
   std::vector<Tag> tags;
+  std::string r_frame_rate;
 } Stream;
 
 typedef struct Chapter {
@@ -129,20 +131,17 @@ FileInfoResponse get_file_info(std::string filename) {
       AVCodecParameters *pLocalCodecParameters = NULL;
       pLocalCodecParameters = pFormatContext->streams[i]->codecpar;
 
-      // Convert to char byte array.
-      uint32_t n = pLocalCodecParameters->codec_tag;
-      char fourcc[5];
-      for (int j = 0; j < 4; ++j) {
-        fourcc[j] = (n >> (j * 8) & 0xFF);
-      }
-      fourcc[4] = 0x00; // NULL terminator.
+      AVRational r_frame_rate = pFormatContext->streams[i]->r_frame_rate;
+
+      std::stringstream r_frame_rate_str;
+      r_frame_rate_str << (int)r_frame_rate.num << "/" << (int)r_frame_rate.den;
 
       Stream stream = {
         .id = (int)pFormatContext->streams[i]->id,
         .start_time = (float)pFormatContext->streams[i]->start_time,
-        .duration = (float)pFormatContext->streams[i]->duration,
-        .codec_type = (int)pLocalCodecParameters->codec_type,
-        .codec_name = fourcc,
+        .duration = (float)pFormatContext->streams[i]->duration / 1000000,
+        .codec_type = av_get_media_type_string(pLocalCodecParameters->codec_type),
+        .codec_name = avcodec_descriptor_get(pLocalCodecParameters->codec_id)->name,
         .format = av_get_pix_fmt_name((AVPixelFormat)pLocalCodecParameters->format),
         .bit_rate = (float)pLocalCodecParameters->bit_rate,
         .profile = avcodec_profile_name(pLocalCodecParameters->codec_id, pLocalCodecParameters->profile),
@@ -152,6 +151,7 @@ FileInfoResponse get_file_info(std::string filename) {
         .channels = (int)pLocalCodecParameters->channels,
         .sample_rate = (int)pLocalCodecParameters->sample_rate,
         .frame_size = (int)pLocalCodecParameters->frame_size,
+        .r_frame_rate = r_frame_rate_str.str(),
       };
 
       // Add tags to stream.
@@ -165,7 +165,6 @@ FileInfoResponse get_file_info(std::string filename) {
       }
 
       r.streams.push_back(stream);
-      free(fourcc);
     }
 
     // Loop through the chapters (if any).
@@ -356,6 +355,7 @@ EMSCRIPTEN_BINDINGS(structs) {
   .field("sample_rate", &Stream::sample_rate)
   .field("frame_size", &Stream::frame_size)
   .field("tags", &Stream::tags)
+  .field("r_frame_rate", &Stream::r_frame_rate)
   ;
   register_vector<Stream>("Stream");
 
