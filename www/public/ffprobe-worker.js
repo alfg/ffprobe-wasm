@@ -2,8 +2,6 @@ onmessage = (message) => {
   const [type, file] = message.data
   const [origin] = message.ports
 
-  let data
-
   switch (type) {
   case 'get_file_info': {
     // Mount FS for files.
@@ -16,38 +14,37 @@ onmessage = (message) => {
     const { name, ...info } = Module.get_file_info(`/work/${file.name}`)
 
     // Remap streams into collection.
-    const s = []
+    const streams = []
     for (let i = 0; i < info.streams.size(); i++) {
       const tags = {}
       for (let j = 0; j < info.streams.get(i).tags.size(); j++) {
         const t = info.streams.get(i).tags.get(j)
         tags[t.key] = t.value
       }
-      s.push({ ...info.streams.get(i), ...{ tags } })
+      streams.push({ ...info.streams.get(i), tags })
     }
 
     // Remap chapters into collection.
-    const c = []
+    const chapters = []
     for (let i = 0; i < info.chapters.size(); i++) {
       const tags = {}
       for (let j = 0; j < info.chapters.get(i).tags.size(); j++) {
         const t = info.chapters.get(i).tags.get(j)
         tags[t.key] = t.value
       }
-      c.push({ ...info.chapters.get(i), ...{ tags } })
+      chapters.push({ ...info.chapters.get(i), ...{ tags } })
     }
 
     // Send back data response.
-    data = {
-      streams: s,
-      chapters: c,
+
+    origin.postMessage({
+      streams,
+      chapters,
       format: {
         ...info,
         format_name: name,
       },
-    }
-
-    origin.postMessage(data)
+    })
 
     // Cleanup mount.
     FS.unmount('/work')
@@ -61,19 +58,18 @@ onmessage = (message) => {
     FS.mount(WORKERFS, { files: [file] }, '/work')
 
     const [,, offset] = message.data
-    const frames = Module.get_frames(`/work/${file.name}`, offset)
+    const info = Module.get_frames(`/work/${file.name}`, offset)
 
     // Remap frames into collection.
-    const f = []
-    for (let i = 0; i < frames.frames.size(); i++) {
-      f.push(frames.frames.get(i))
+    const frames = []
+    for (let i = 0; i < info.frames.size(); i++) {
+      frames.push(info.frames.get(i))
     }
 
-    data = {
-      ...frames,
-      frames: f,
-    }
-    origin.postMessage(data)
+    origin.postMessage({
+      ...info,
+      frames,
+    })
 
     // Cleanup mount.
     FS.unmount('/work')
