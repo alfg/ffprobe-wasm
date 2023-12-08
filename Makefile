@@ -10,4 +10,5 @@ dist/ffprobe-wasm.js:
 	-pthread \
 	-lworkerfs.js \
 	-o dist/ffprobe-wasm.js \
-	src/ffprobe-wasm-wrapper.cpp
+	src/ffprobe-wasm-wrapper.cpp && \
+	cp www/public/ffprobe-worker.js dist/

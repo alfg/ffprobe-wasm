@@ -17,15 +17,15 @@ extern "C" {
 };
 
 const std::string c_avformat_version() {
-    return AV_STRINGIFY(LIBAVFORMAT_VERSION);
+  return AV_STRINGIFY(LIBAVFORMAT_VERSION);
 }
 
 const std::string c_avcodec_version() {
-    return AV_STRINGIFY(LIBAVCODEC_VERSION);
+  return AV_STRINGIFY(LIBAVCODEC_VERSION);
 }
 
 const std::string c_avutil_version() {
-    return AV_STRINGIFY(LIBAVUTIL_VERSION);
+  return AV_STRINGIFY(LIBAVUTIL_VERSION);
 }
 
 typedef struct Tag {
@@ -91,245 +91,245 @@ typedef struct FramesResponse {
 } FramesResponse;
 
 FileInfoResponse get_file_info(std::string filename) {
-    av_log_set_level(AV_LOG_QUIET); // No logging output for libav.
+  av_log_set_level(AV_LOG_QUIET); // No logging output for libav.
 
-    FILE *file = fopen(filename.c_str(), "rb");
-    if (!file) {
-      printf("cannot open file\n");
-    }
-    fclose(file);
+  FILE *file = fopen(filename.c_str(), "rb");
+  if (!file) {
+    printf("cannot open file\n");
+  }
+  fclose(file);
 
-    AVFormatContext *pFormatContext = avformat_alloc_context();
-    if (!pFormatContext) {
-      printf("ERROR: could not allocate memory for Format Context\n");
-    }
+  AVFormatContext *pFormatContext = avformat_alloc_context();
+  if (!pFormatContext) {
+    printf("ERROR: could not allocate memory for Format Context\n");
+  }
 
-    // Open the file and read header.
-    int ret;
-    if ((ret = avformat_open_input(&pFormatContext, filename.c_str(), NULL, NULL)) < 0) {
-        printf("ERROR: %s\n", av_err2str(ret));
-    }
+  // Open the file and read header.
+  int ret;
+  if ((ret = avformat_open_input(&pFormatContext, filename.c_str(), NULL, NULL)) < 0) {
+    printf("ERROR: %s\n", av_err2str(ret));
+  }
 
-    // Get stream info from format.
-    if (avformat_find_stream_info(pFormatContext, NULL) < 0) {
-      printf("ERROR: could not get stream info\n");
-    }
+  // Get stream info from format.
+  if (avformat_find_stream_info(pFormatContext, NULL) < 0) {
+    printf("ERROR: could not get stream info\n");
+  }
 
-    // Initialize response struct with format data.
-    FileInfoResponse r = {
-      .name = pFormatContext->iformat->name,
-      .bit_rate = (float)pFormatContext->bit_rate,
-      .duration = (float)pFormatContext->duration,
-      .url = pFormatContext->url,
-      .nb_streams = (int)pFormatContext->nb_streams,
-      .flags = pFormatContext->flags,
-      .nb_chapters = (int)pFormatContext->nb_chapters
+  // Initialize response struct with format data.
+  FileInfoResponse r = {
+    .name = pFormatContext->iformat->name,
+    .bit_rate = (float)pFormatContext->bit_rate,
+    .duration = (float)pFormatContext->duration,
+    .url = pFormatContext->url,
+    .nb_streams = (int)pFormatContext->nb_streams,
+    .flags = pFormatContext->flags,
+    .nb_chapters = (int)pFormatContext->nb_chapters
+  };
+
+  // Loop through the streams.
+  for (int i = 0; i < pFormatContext->nb_streams; i++) {
+    AVCodecParameters *pLocalCodecParameters = NULL;
+    pLocalCodecParameters = pFormatContext->streams[i]->codecpar;
+
+    AVRational r_frame_rate = pFormatContext->streams[i]->r_frame_rate;
+
+    std::stringstream r_frame_rate_str;
+    r_frame_rate_str << (int)r_frame_rate.num << "/" << (int)r_frame_rate.den;
+
+    Stream stream = {
+      .id = (int)pFormatContext->streams[i]->id,
+      .start_time = (float)pFormatContext->streams[i]->start_time,
+      .duration = (float)pFormatContext->streams[i]->duration / 1000000,
+      .codec_type = av_get_media_type_string(pLocalCodecParameters->codec_type),
+      .codec_name = avcodec_descriptor_get(pLocalCodecParameters->codec_id)->name,
+      .format = av_get_pix_fmt_name((AVPixelFormat)pLocalCodecParameters->format),
+      .bit_rate = (float)pLocalCodecParameters->bit_rate,
+      .profile = avcodec_profile_name(pLocalCodecParameters->codec_id, pLocalCodecParameters->profile),
+      .level = (int)pLocalCodecParameters->level,
+      .width = (int)pLocalCodecParameters->width,
+      .height = (int)pLocalCodecParameters->height,
+      .channels = (int)pLocalCodecParameters->channels,
+      .sample_rate = (int)pLocalCodecParameters->sample_rate,
+      .frame_size = (int)pLocalCodecParameters->frame_size,
+      .r_frame_rate = r_frame_rate_str.str(),
     };
 
-    // Loop through the streams.
-    for (int i = 0; i < pFormatContext->nb_streams; i++) {
-      AVCodecParameters *pLocalCodecParameters = NULL;
-      pLocalCodecParameters = pFormatContext->streams[i]->codecpar;
-
-      AVRational r_frame_rate = pFormatContext->streams[i]->r_frame_rate;
-
-      std::stringstream r_frame_rate_str;
-      r_frame_rate_str << (int)r_frame_rate.num << "/" << (int)r_frame_rate.den;
-
-      Stream stream = {
-        .id = (int)pFormatContext->streams[i]->id,
-        .start_time = (float)pFormatContext->streams[i]->start_time,
-        .duration = (float)pFormatContext->streams[i]->duration / 1000000,
-        .codec_type = av_get_media_type_string(pLocalCodecParameters->codec_type),
-        .codec_name = avcodec_descriptor_get(pLocalCodecParameters->codec_id)->name,
-        .format = av_get_pix_fmt_name((AVPixelFormat)pLocalCodecParameters->format),
-        .bit_rate = (float)pLocalCodecParameters->bit_rate,
-        .profile = avcodec_profile_name(pLocalCodecParameters->codec_id, pLocalCodecParameters->profile),
-        .level = (int)pLocalCodecParameters->level,
-        .width = (int)pLocalCodecParameters->width,
-        .height = (int)pLocalCodecParameters->height,
-        .channels = (int)pLocalCodecParameters->channels,
-        .sample_rate = (int)pLocalCodecParameters->sample_rate,
-        .frame_size = (int)pLocalCodecParameters->frame_size,
-        .r_frame_rate = r_frame_rate_str.str(),
+    // Add tags to stream.
+    const AVDictionaryEntry *tag = NULL;
+    while ((tag = av_dict_get(pFormatContext->streams[i]->metadata, "", tag, AV_DICT_IGNORE_SUFFIX))) {
+      Tag t = {
+        .key = tag->key,
+        .value = tag->value,
       };
-
-      // Add tags to stream.
-      const AVDictionaryEntry *tag = NULL;
-      while ((tag = av_dict_get(pFormatContext->streams[i]->metadata, "", tag, AV_DICT_IGNORE_SUFFIX))) {
-        Tag t = {
-          .key = tag->key,
-          .value = tag->value,
-        };
-        stream.tags.push_back(t);
-      }
-
-      r.streams.push_back(stream);
+      stream.tags.push_back(t);
     }
 
-    // Loop through the chapters (if any).
-    for (int i = 0; i < pFormatContext->nb_chapters; i++) {
-      AVChapter *chapter = pFormatContext->chapters[i];
+    r.streams.push_back(stream);
+  }
 
-      // Format timebase string to buf.
-      AVBPrint buf;
-      av_bprint_init(&buf, 0, AV_BPRINT_SIZE_AUTOMATIC);
-      av_bprintf(&buf, "%d%s%d", chapter->time_base.num, (char *)"/", chapter->time_base.den);
+  // Loop through the chapters (if any).
+  for (int i = 0; i < pFormatContext->nb_chapters; i++) {
+    AVChapter *chapter = pFormatContext->chapters[i];
 
-      Chapter c = {
-        .id = (int)chapter->id,
-        .time_base = buf.str,
-        .start = (float)chapter->start,
-        .end = (float)chapter->end,
+    // Format timebase string to buf.
+    AVBPrint buf;
+    av_bprint_init(&buf, 0, AV_BPRINT_SIZE_AUTOMATIC);
+    av_bprintf(&buf, "%d%s%d", chapter->time_base.num, (char *)"/", chapter->time_base.den);
+
+    Chapter c = {
+      .id = (int)chapter->id,
+      .time_base = buf.str,
+      .start = (float)chapter->start,
+      .end = (float)chapter->end,
+    };
+
+    // Add tags to chapter.
+    const AVDictionaryEntry *tag = NULL;
+    while ((tag = av_dict_get(chapter->metadata, "", tag, AV_DICT_IGNORE_SUFFIX))) {
+      Tag t = {
+        .key = tag->key,
+        .value = tag->value,
       };
-
-      // Add tags to chapter.
-      const AVDictionaryEntry *tag = NULL;
-      while ((tag = av_dict_get(chapter->metadata, "", tag, AV_DICT_IGNORE_SUFFIX))) {
-        Tag t = {
-          .key = tag->key,
-          .value = tag->value,
-        };
-        c.tags.push_back(t);
-      }
-
-      r.chapters.push_back(c);
+      c.tags.push_back(t);
     }
 
-    avformat_close_input(&pFormatContext);
-    return r;
+    r.chapters.push_back(c);
+  }
+
+  avformat_close_input(&pFormatContext);
+  return r;
 }
 
 FramesResponse get_frames(std::string filename, int timestamp) {
-    av_log_set_level(AV_LOG_QUIET); // No logging output for libav.
+  av_log_set_level(AV_LOG_QUIET); // No logging output for libav.
 
-    FILE *file = fopen(filename.c_str(), "rb");
-    if (!file) {
-      printf("cannot open file\n");
-    }
-    fclose(file);
+  FILE *file = fopen(filename.c_str(), "rb");
+  if (!file) {
+    printf("cannot open file\n");
+  }
+  fclose(file);
 
-    AVFormatContext *pFormatContext = avformat_alloc_context();
-    if (!pFormatContext) {
-      printf("ERROR: could not allocate memory for Format Context\n");
-    }
+  AVFormatContext *pFormatContext = avformat_alloc_context();
+  if (!pFormatContext) {
+    printf("ERROR: could not allocate memory for Format Context\n");
+  }
 
-    // Open the file and read header.
-    int ret;
-    if ((ret = avformat_open_input(&pFormatContext, filename.c_str(), NULL, NULL)) < 0) {
-        printf("ERROR: %s\n", av_err2str(ret));
-    }
+  // Open the file and read header.
+  int ret;
+  if ((ret = avformat_open_input(&pFormatContext, filename.c_str(), NULL, NULL)) < 0) {
+    printf("ERROR: %s\n", av_err2str(ret));
+  }
 
-    // Get stream info from format.
-    if (avformat_find_stream_info(pFormatContext, NULL) < 0) {
-      printf("ERROR: could not get stream info\n");
-    }
+  // Get stream info from format.
+  if (avformat_find_stream_info(pFormatContext, NULL) < 0) {
+    printf("ERROR: could not get stream info\n");
+  }
 
-    // Get streams data.
-    AVCodec  *pCodec = NULL;
-    AVCodecParameters *pCodecParameters = NULL;
-    int video_stream_index = -1;
-    int nb_frames = 0;
+  // Get streams data.
+  AVCodec  *pCodec = NULL;
+  AVCodecParameters *pCodecParameters = NULL;
+  int video_stream_index = -1;
+  int nb_frames = 0;
 
-    // Loop through the streams.
-    for (int i = 0; i < pFormatContext->nb_streams; i++) {
-      AVCodecParameters *pLocalCodecParameters = NULL;
-      pLocalCodecParameters = pFormatContext->streams[i]->codecpar;
+  // Loop through the streams.
+  for (int i = 0; i < pFormatContext->nb_streams; i++) {
+    AVCodecParameters *pLocalCodecParameters = NULL;
+    pLocalCodecParameters = pFormatContext->streams[i]->codecpar;
 
-      // Print out the decoded frame info.
-      AVCodec *pLocalCodec = avcodec_find_decoder(pLocalCodecParameters->codec_id);
-      if (pLocalCodecParameters->codec_type == AVMEDIA_TYPE_VIDEO) {
-        if (video_stream_index == -1) {
-          video_stream_index = i;
-          nb_frames = pFormatContext->streams[i]->nb_frames;
+    // Print out the decoded frame info.
+    AVCodec *pLocalCodec = avcodec_find_decoder(pLocalCodecParameters->codec_id);
+    if (pLocalCodecParameters->codec_type == AVMEDIA_TYPE_VIDEO) {
+      if (video_stream_index == -1) {
+        video_stream_index = i;
+        nb_frames = pFormatContext->streams[i]->nb_frames;
 
-          // Calculate the nb_frames for MKV/WebM if nb_frames is 0.
-          if (nb_frames == 0) {
-            nb_frames = (pFormatContext->duration / 1000000) * pFormatContext->streams[i]->avg_frame_rate.num;
-          }
-          pCodec = pLocalCodec;
-          pCodecParameters = pLocalCodecParameters;
+        // Calculate the nb_frames for MKV/WebM if nb_frames is 0.
+        if (nb_frames == 0) {
+          nb_frames = (pFormatContext->duration / 1000000) * pFormatContext->streams[i]->avg_frame_rate.num;
         }
+        pCodec = pLocalCodec;
+        pCodecParameters = pLocalCodecParameters;
       }
     }
+  }
 
-    AVRational stream_time_base = pFormatContext->streams[video_stream_index]->time_base;
-    AVRational avg_frame_rate = pFormatContext->streams[video_stream_index]->avg_frame_rate;
-    // printf("stream_time_base: %d / %d = %.5f\n", stream_time_base.num, stream_time_base.den, av_q2d(stream_time_base));
+  AVRational stream_time_base = pFormatContext->streams[video_stream_index]->time_base;
+  AVRational avg_frame_rate = pFormatContext->streams[video_stream_index]->avg_frame_rate;
+  // printf("stream_time_base: %d / %d = %.5f\n", stream_time_base.num, stream_time_base.den, av_q2d(stream_time_base));
 
-    FramesResponse r;
-    r.nb_frames = nb_frames;
-    r.time_base = av_q2d(stream_time_base);
-    r.avg_frame_rate = av_q2d(avg_frame_rate);
-    r.duration = pFormatContext->streams[video_stream_index]->duration;
+  FramesResponse r;
+  r.nb_frames = nb_frames;
+  r.time_base = av_q2d(stream_time_base);
+  r.avg_frame_rate = av_q2d(avg_frame_rate);
+  r.duration = pFormatContext->streams[video_stream_index]->duration;
 
-    // If the duration value isn't in the stream, get from the FormatContext.
-    if (r.duration == 0) {
-      r.duration = pFormatContext->duration * r.time_base;
-    }
+  // If the duration value isn't in the stream, get from the FormatContext.
+  if (r.duration == 0) {
+    r.duration = pFormatContext->duration * r.time_base;
+  }
 
-    AVCodecContext *pCodecContext = avcodec_alloc_context3(pCodec);
-    avcodec_parameters_to_context(pCodecContext, pCodecParameters);
-    avcodec_open2(pCodecContext, pCodec, NULL);
+  AVCodecContext *pCodecContext = avcodec_alloc_context3(pCodec);
+  avcodec_parameters_to_context(pCodecContext, pCodecParameters);
+  avcodec_open2(pCodecContext, pCodec, NULL);
 
-    AVPacket *pPacket = av_packet_alloc();
-    AVFrame *pFrame = av_frame_alloc();
+  AVPacket *pPacket = av_packet_alloc();
+  AVFrame *pFrame = av_frame_alloc();
 
-    int max_packets_to_process = 1000;
-    int frame_count = 0;
-    int key_frames = 0;
+  int max_packets_to_process = 1000;
+  int frame_count = 0;
+  int key_frames = 0;
 
-    // Seek to frame from the given timestamp.
-    av_seek_frame(pFormatContext, video_stream_index, timestamp, AVSEEK_FLAG_ANY);
+  // Seek to frame from the given timestamp.
+  av_seek_frame(pFormatContext, video_stream_index, timestamp, AVSEEK_FLAG_ANY);
 
-    // Read video frames.
-    while (av_read_frame(pFormatContext, pPacket) >= 0) {
-      if (pPacket->stream_index == video_stream_index) {
-          int response = 0;
-          response = avcodec_send_packet(pCodecContext, pPacket);
+  // Read video frames.
+  while (av_read_frame(pFormatContext, pPacket) >= 0) {
+    if (pPacket->stream_index == video_stream_index) {
+      int response = 0;
+      response = avcodec_send_packet(pCodecContext, pPacket);
 
-          if (response >= 0) {
-            response = avcodec_receive_frame(pCodecContext, pFrame);
-            if (response == AVERROR(EAGAIN) || response == AVERROR_EOF) {
-              continue;
-            }
+      if (response >= 0) {
+        response = avcodec_receive_frame(pCodecContext, pFrame);
+        if (response == AVERROR(EAGAIN) || response == AVERROR_EOF) {
+          continue;
+        }
 
-            // Track keyframes so we paginate by each GOP.
-            if (pFrame->key_frame == 1) key_frames++;
+        // Track keyframes so we paginate by each GOP.
+        if (pFrame->key_frame == 1) key_frames++;
 
-            // Break at the next keyframe found.
-            if (key_frames > 1) break;
+        // Break at the next keyframe found.
+        if (key_frames > 1) break;
 
-            Frame f = {
-              .frame_number = frame_count,
-              .pict_type = (char) av_get_picture_type_char(pFrame->pict_type),
-              .pts = (int) pPacket->pts,
-              .dts = (int) pPacket->dts,
-              .pos = (int) pPacket->pos,
-              .pkt_size = pFrame->pkt_size,
-            };
-            r.frames.push_back(f);
+        Frame f = {
+          .frame_number = frame_count,
+          .pict_type = (char) av_get_picture_type_char(pFrame->pict_type),
+          .pts = (int) pPacket->pts,
+          .dts = (int) pPacket->dts,
+          .pos = (int) pPacket->pos,
+          .pkt_size = pFrame->pkt_size,
+        };
+        r.frames.push_back(f);
 
-            if (--max_packets_to_process <= 0) break;
-          }
-        frame_count++;
+        if (--max_packets_to_process <= 0) break;
       }
-      av_packet_unref(pPacket);
+      frame_count++;
     }
-    r.gop_size = frame_count;
+    av_packet_unref(pPacket);
+  }
+  r.gop_size = frame_count;
 
-    avformat_close_input(&pFormatContext);
-    av_packet_free(&pPacket);
-    av_frame_free(&pFrame);
-    avcodec_free_context(&pCodecContext);
+  avformat_close_input(&pFormatContext);
+  av_packet_free(&pPacket);
+  av_frame_free(&pFrame);
+  avcodec_free_context(&pCodecContext);
 
-    return r;
+  return r;
 }
 
 EMSCRIPTEN_BINDINGS(constants) {
-    function("avformat_version", &c_avformat_version);
-    function("avcodec_version", &c_avcodec_version);
-    function("avutil_version", &c_avutil_version);
+  function("avformat_version", &c_avformat_version);
+  function("avcodec_version", &c_avcodec_version);
+  function("avutil_version", &c_avutil_version);
 }
 
 EMSCRIPTEN_BINDINGS(structs) {
