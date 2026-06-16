@@ -1,7 +1,7 @@
-#include <vector>
 #include <string>
 #include <vector>
 #include <inttypes.h>
+#include <stdexcept>
 #include <emscripten.h>
 #include <emscripten/bind.h>
 
@@ -12,7 +12,7 @@ extern "C" {
 #include <libavformat/avformat.h>
 #include <libavutil/avutil.h>
 #include <libavutil/bprint.h>
-#include <libavutil/imgutils.h>
+#include <libavutil/pixdesc.h>
 };
 
 const std::string c_avformat_version() {
@@ -93,24 +93,22 @@ FileInfoResponse get_file_info(std::string filename) {
 
     FILE *file = fopen(filename.c_str(), "rb");
     if (!file) {
-      printf("cannot open file\n");
+      throw std::runtime_error("Cannot open file: " + filename);
     }
     fclose(file);
 
-    AVFormatContext *pFormatContext = avformat_alloc_context();
-    if (!pFormatContext) {
-      printf("ERROR: could not allocate memory for Format Context\n");
-    }
+    AVFormatContext *pFormatContext = NULL;
 
     // Open the file and read header.
     int ret;
     if ((ret = avformat_open_input(&pFormatContext, filename.c_str(), NULL, NULL)) < 0) {
-        printf("ERROR: %s\n", av_err2str(ret));
+        throw std::runtime_error(std::string("Could not open input: ") + av_err2str(ret));
     }
 
     // Get stream info from format.
-    if (avformat_find_stream_info(pFormatContext, NULL) < 0) {
-      printf("ERROR: could not get stream info\n");
+    if ((ret = avformat_find_stream_info(pFormatContext, NULL)) < 0) {
+      avformat_close_input(&pFormatContext);
+      throw std::runtime_error(std::string("Could not get stream info: ") + av_err2str(ret));
     }
 
     // Initialize response struct with format data.
@@ -143,13 +141,17 @@ FileInfoResponse get_file_info(std::string filename) {
         .duration = (float)pFormatContext->streams[i]->duration,
         .codec_type = (int)pLocalCodecParameters->codec_type,
         .codec_name = fourcc,
-        .format = av_get_pix_fmt_name((AVPixelFormat)pLocalCodecParameters->format),
+        .format = pLocalCodecParameters->format >= 0 && av_get_pix_fmt_name((AVPixelFormat)pLocalCodecParameters->format)
+          ? av_get_pix_fmt_name((AVPixelFormat)pLocalCodecParameters->format)
+          : "",
         .bit_rate = (float)pLocalCodecParameters->bit_rate,
-        .profile = avcodec_profile_name(pLocalCodecParameters->codec_id, pLocalCodecParameters->profile),
+        .profile = avcodec_profile_name(pLocalCodecParameters->codec_id, pLocalCodecParameters->profile)
+          ? avcodec_profile_name(pLocalCodecParameters->codec_id, pLocalCodecParameters->profile)
+          : "",
         .level = (int)pLocalCodecParameters->level,
         .width = (int)pLocalCodecParameters->width,
         .height = (int)pLocalCodecParameters->height,
-        .channels = (int)pLocalCodecParameters->channels,
+        .channels = (int)pLocalCodecParameters->ch_layout.nb_channels,
         .sample_rate = (int)pLocalCodecParameters->sample_rate,
         .frame_size = (int)pLocalCodecParameters->frame_size,
       };
@@ -165,7 +167,6 @@ FileInfoResponse get_file_info(std::string filename) {
       }
 
       r.streams.push_back(stream);
-      free(fourcc);
     }
 
     // Loop through the chapters (if any).
@@ -195,6 +196,7 @@ FileInfoResponse get_file_info(std::string filename) {
       }
 
       r.chapters.push_back(c);
+      av_bprint_finalize(&buf, NULL);
     }
 
     avformat_close_input(&pFormatContext);
@@ -206,28 +208,26 @@ FramesResponse get_frames(std::string filename, int timestamp) {
 
     FILE *file = fopen(filename.c_str(), "rb");
     if (!file) {
-      printf("cannot open file\n");
+      throw std::runtime_error("Cannot open file: " + filename);
     }
     fclose(file);
 
-    AVFormatContext *pFormatContext = avformat_alloc_context();
-    if (!pFormatContext) {
-      printf("ERROR: could not allocate memory for Format Context\n");
-    }
+    AVFormatContext *pFormatContext = NULL;
 
     // Open the file and read header.
     int ret;
     if ((ret = avformat_open_input(&pFormatContext, filename.c_str(), NULL, NULL)) < 0) {
-        printf("ERROR: %s\n", av_err2str(ret));
+        throw std::runtime_error(std::string("Could not open input: ") + av_err2str(ret));
     }
 
     // Get stream info from format.
-    if (avformat_find_stream_info(pFormatContext, NULL) < 0) {
-      printf("ERROR: could not get stream info\n");
+    if ((ret = avformat_find_stream_info(pFormatContext, NULL)) < 0) {
+      avformat_close_input(&pFormatContext);
+      throw std::runtime_error(std::string("Could not get stream info: ") + av_err2str(ret));
     }
 
     // Get streams data.
-    AVCodec  *pCodec = NULL;
+    const AVCodec *pCodec = NULL;
     AVCodecParameters *pCodecParameters = NULL;
     int video_stream_index = -1;
     int nb_frames = 0;
@@ -238,7 +238,7 @@ FramesResponse get_frames(std::string filename, int timestamp) {
       pLocalCodecParameters = pFormatContext->streams[i]->codecpar;
 
       // Print out the decoded frame info.
-      AVCodec *pLocalCodec = avcodec_find_decoder(pLocalCodecParameters->codec_id);
+      const AVCodec *pLocalCodec = avcodec_find_decoder(pLocalCodecParameters->codec_id);
       if (pLocalCodecParameters->codec_type == AVMEDIA_TYPE_VIDEO) {
         if (video_stream_index == -1) {
           video_stream_index = i;
@@ -252,6 +252,11 @@ FramesResponse get_frames(std::string filename, int timestamp) {
           pCodecParameters = pLocalCodecParameters;
         }
       }
+    }
+
+    if (video_stream_index < 0 || !pCodec || !pCodecParameters) {
+      avformat_close_input(&pFormatContext);
+      throw std::runtime_error("No supported video stream found");
     }
 
     AVRational stream_time_base = pFormatContext->streams[video_stream_index]->time_base;
@@ -292,11 +297,12 @@ FramesResponse get_frames(std::string filename, int timestamp) {
           if (response >= 0) {
             response = avcodec_receive_frame(pCodecContext, pFrame);
             if (response == AVERROR(EAGAIN) || response == AVERROR_EOF) {
+              av_packet_unref(pPacket);
               continue;
             }
 
             // Track keyframes so we paginate by each GOP.
-            if (pFrame->key_frame == 1) key_frames++;
+            if (pFrame->flags & AV_FRAME_FLAG_KEY) key_frames++;
 
             // Break at the next keyframe found.
             if (key_frames > 1) break;
@@ -307,7 +313,7 @@ FramesResponse get_frames(std::string filename, int timestamp) {
               .pts = (int) pPacket->pts,
               .dts = (int) pPacket->dts,
               .pos = (int) pPacket->pos,
-              .pkt_size = pFrame->pkt_size,
+              .pkt_size = pPacket->size,
             };
             r.frames.push_back(f);
 
