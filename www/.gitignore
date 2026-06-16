@@ -24,3 +24,5 @@ pnpm-debug.log*
 
 public/*-wasm*.js
 public/*.wasm
+public/ffprobe.js
+public/ffprobe.worker.js

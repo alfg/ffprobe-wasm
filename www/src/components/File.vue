@@ -11,7 +11,7 @@
               <b-form-file
                   v-if="protocol === 'file'"
                   id="file"
-                  accept=".mp4, .mkv, .mp3"
+                  accept=".mp4, .mkv, .mp3, .webm, .flv"
                   v-model="file"
                   :state="Boolean(file)"
                   placeholder="Choose a file or drop it here..."
@@ -62,6 +62,9 @@
           <b-tab v-if="file.type !== 'audio/mpeg'" title="Frames" class="mt-2" lazy>
             <Frames :file="file" />
           </b-tab>
+          <b-tab title="Raw ffprobe" class="mt-2" lazy>
+            <Raw :file="file" />
+          </b-tab>
         </b-tabs>
       </div>
     </div>
@@ -70,12 +73,14 @@
 <script>
 import Overview from './Overview.vue';
 import Frames from './Frames.vue';
+import Raw from './Raw.vue';
 
 export default {
   name: 'File',
   components: {
     Overview,
     Frames,
+    Raw,
   },
   data() {
     return {
